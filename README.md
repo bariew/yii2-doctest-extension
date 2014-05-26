@@ -1,7 +1,19 @@
 
 Doc test Yii2 extension
 ===================
-Executes @example docBlock params as test cases
+Executes @example docBlock params as test cases.
+
+
+Description
+-----------
+
+This extension is for fast testing.
+It takes your docblock @example tag and runs its content as assert expression.
+So you can define few @examples for your method to be sure that it 
+still return the data you expect.
+It also runs you url get and post requests, e.g. you can test your API Controller
+with @example tags for each method.
+
 
 Installation
 ------------
@@ -23,15 +35,15 @@ or add
 to the require section of your `composer.json` file.
 
 
-Usage
+Usage:
+------
 -----
 ```
     Unit tests:  
-    1. define @example docblocks in your target class method descriptions:
+    1. define @example docblock in your tested class method descriptions:
         /**
-         * returns user default name
-         * @param string $methodName the name of tested method
-         * @return boolean true if no examples in dockblocks provided
+         * Returns user default name
+         * @return string name.
          * @example $this->getDefaultName() == "Mr. Smith"
          */
         protected function getDefaultName()
@@ -48,6 +60,6 @@ Usage
     1. define @example docblocks in your target class method descriptions:
         $this->post("http://mySite.com/myPath", ["myParam"=>"MyValue"]) == '{"code":200, "message":"OK"}'
     2. Call UrlTest from your test script: 
-        $docTester = new \bariew\docTest\UrlTest("app\models\User");
+        $docTester = new \bariew\docTest\UrlTest("app\controllers\UserController");
         $docTester->test();
 ```
