@@ -21,6 +21,7 @@ class ClickTest extends TestCase
 {
     /* TESTING */
 
+    public $response;
     /**
      * @var Curl curl instance.
      */
@@ -117,7 +118,7 @@ class ClickTest extends TestCase
      */
     protected function getPageUrls($url)
     {
-        if (!$body = $this->request($url)){
+        if (!$body = $this->request($url)->response){
             return [];
         }
         $result = [];
@@ -185,14 +186,14 @@ class ClickTest extends TestCase
      */
     public function request($url, $post = [])
     {
-        $url = $this->baseUrl . str_replace($this->baseUrl, '', $url);
-        $body = $this->getCurl()->request($url, $post);
+        $url = $this->prepareUrl($url);
+        $this->response = $this->getCurl()->request($url, $post);
         if (!$this->getCurl()->isSuccess()) {
-            $this->errors[$url] = $this->getCurl()->headers[0]['http_code'];
-            return false;
+            $this->errors[$url] = $this->getCurl()->getHeader('http_code');
+            $this->response = false;
         }
 
-        return $body;
+        return $this;
     }
 
     /**
@@ -203,16 +204,15 @@ class ClickTest extends TestCase
      */
     public function login($url, $post)
     {
-        $getResult = $this->request($url);
+        $getResult = $this->request($url)->response;
         if (!preg_match('/name\=\"' . quotemeta(key($post)) . '\"/', $getResult)) {
             return $this;
         }
-        if (preg_match('/\"_csrf\" value\=\"(\S+)\"/', $getResult, $matches)) {
-            $post['_csrf'] = $matches[1];
+        $doc = \phpQuery::newDocument($getResult);
+        foreach ($doc->find("[name=_csrf]") as $el) {
+            $post['_csrf'] = pq($el)->attr('value');
         }
-        $this->request($url, $post);
-
-        return $this;
+        return $this->request($url, $post);
     }
 
     /**

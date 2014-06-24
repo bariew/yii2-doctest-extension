@@ -22,10 +22,12 @@ class ExampleClickTest extends \yii\codeception\TestCase
         // init clicktest with required base url param.
         $clickTest = new ClickTest('http://cms.dev');
         // login to your login page with your access data.
-        $clickTest->login('/user/default/login', [
+        $clickTest->request(
+            '/user/default/logout'
+        )->login('/user/default/login', [
             'LoginForm[username]'=>'pt',
             'LoginForm[password]'=>'pt'
-        // click all site links recursively starting from root '/' url.
+            // click all site links recursively starting from root '/' url.
         ])->clickAllLinks('/');
         // display result.
         $clickTest->result();
