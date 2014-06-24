@@ -49,7 +49,7 @@ class UnitTest extends TestCase
     protected $tagName = 'example';
 
 
-    
+
     /* TESTING */
 
     /**

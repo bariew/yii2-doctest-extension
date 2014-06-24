@@ -123,12 +123,18 @@ class Curl
 
     public function isSuccess()
     {
-        if (!$this->headers) {
-            throw new \Exception("Could not connect to " . $this->url);
-        }
-        if (!preg_match('/ (\d+) /', $this->headers[0]['http_code'], $matches)) {
+        if (!preg_match('/ (\d+) /', $this->getHeader('http_code'), $matches)) {
             return false;
         }
         return $matches[1] < 400; // http response code;
+    }
+
+    public function getHeader($key, $num = false)
+    {
+        if (!$this->headers) {
+            throw new \Exception("Could not connect to " . $this->url);
+        }
+        $headers = $num === false ? end($this->headers) : $this->headers[$num];
+        return $headers[$key];
     }
 } 
