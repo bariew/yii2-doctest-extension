@@ -11,6 +11,8 @@ namespace bariew\docTest;
 
 class Curl
 {
+    public $url;
+    public $post;
     public $headers = [];
     public $body = '';
     public $cookieFile = '/tmp/clickTestCookie';
@@ -24,6 +26,8 @@ class Curl
      */
     public function request($url, $post = [], $files = [])
     {
+        $this->url = $url;
+        $this->post = $post;
         $curlOptions = [
             CURLOPT_URL             => $url,
             CURLOPT_RETURNTRANSFER  => true,
@@ -35,7 +39,8 @@ class Curl
             CURLOPT_VERBOSE         => true,
             CURLOPT_HEADER          => true,
             CURLOPT_COOKIEJAR       => $this->cookieFile,
-            CURLOPT_COOKIEFILE      => $this->cookieFile
+            CURLOPT_COOKIEFILE      => $this->cookieFile,
+            CURLOPT_VERBOSE         => false,
         ];
         if($files){
             foreach(array_keys($files['name']) as $name){
@@ -54,7 +59,6 @@ class Curl
         $ch = curl_init();
         curl_setopt_array($ch, $curlOptions);
         $result = curl_exec($ch);
-
         $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
         curl_close($ch);
         $body = substr($result, $header_size);
@@ -119,6 +123,9 @@ class Curl
 
     public function isSuccess()
     {
+        if (!$this->headers) {
+            throw new \Exception("Could not connect to " . $this->url);
+        }
         if (!preg_match('/ (\d+) /', $this->headers[0]['http_code'], $matches)) {
             return false;
         }
