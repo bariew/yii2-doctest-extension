@@ -54,6 +54,10 @@ Usage:
     2. Call UnitTest from your test script: 
         $docTester = new \bariew\docTest\UnitTest("app\models\User");
         $docTester->test();
+
+    You may also define your own docblock tag name, e.g.
+    1. * @test ... assert impression
+    2. $docTester = new UnitTest("My\Class\Name", ['tagName' => @test]);
 ```
 ```
     Url tests:  
@@ -65,7 +69,6 @@ Usage:
 ```
 
 ```
-    You may also define your own docblock tag name, e.g. 
-    1. * @test ... assert impression
-    2. $docTester = new UnitTest("My\Class\Name", ['tagName' => @test]);
+    Click tests:
+    1. 
 ```
