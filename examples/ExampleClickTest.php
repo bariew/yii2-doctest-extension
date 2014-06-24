@@ -21,7 +21,7 @@ class ExampleClickTest extends \yii\codeception\TestCase
     {
         // init clicktest with required base url param.
         $clickTest = new ClickTest('http://cms.dev');
-        // login to your login page with your access data.
+        // login to your login pagit ge with your access data.
         $clickTest->request(
             '/user/default/logout'
         )->login('/user/default/login', [

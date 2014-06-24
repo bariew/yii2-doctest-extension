@@ -61,9 +61,8 @@ class Curl
         $result = curl_exec($ch);
         $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
         curl_close($ch);
-        $body = substr($result, $header_size);
         $this->headers = $this->setHeaders(substr($result, 0, $header_size));
-        return $body;
+        return $this->body = substr($result, $header_size);
     }
     /**
      * Creates post query string with subqueries

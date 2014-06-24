@@ -6,7 +6,6 @@
  */
 namespace bariew\docTest;
 
-use yii\codeception\TestCase;
 use \Yii;
 
 /**
@@ -17,7 +16,7 @@ use \Yii;
  *
  * @author Pavel Bariev <bariew@yandex.ru>
  */
-class ClickTest extends TestCase
+class ClickTest
 {
     /* TESTING */
 
@@ -62,12 +61,13 @@ class ClickTest extends TestCase
      */
     public $errors = [];
 
+    protected $startTime;
+
     /**
      * @inheritdoc
      */
     public function __construct($baseUrl, $options = [])
     {
-        parent::__construct($baseUrl);
         $this->baseUrl = $baseUrl;
         set_time_limit(0);
         ini_set('memory_limit', '-1');
@@ -83,6 +83,9 @@ class ClickTest extends TestCase
      */
     public function clickAllLinks($url = '')
     {
+        if (!$this->startTime) {
+            $this->startTime = time();
+        }
         $startUrl = $this->prepareUrl($url);
         $this->visited[] = $startUrl;
         $this->visitUrls($this->getPageUrls($startUrl));
@@ -103,12 +106,15 @@ class ClickTest extends TestCase
      */
     public function result()
     {
+        echo "\n Checked " . count($this->visited) . " urls in " . (time()-$this->startTime) . " sec. \n\n";
         if ($this->errors) {
             echo "\n Errors:";
             foreach ($this->errors as $url => $code) {
                 echo "\n {$url} - {$code} \n";
             }
             exit(1);
+        } else {
+            exit("\n OK! \n");
         }
     }
     /**
@@ -135,7 +141,7 @@ class ClickTest extends TestCase
      */
     protected function visitUrls($urls)
     {
-        foreach ( $urls as $url) {
+        foreach ($urls as $url) {
             if ($this->filterUrl($url)) {
                 continue;
             }
@@ -200,13 +206,16 @@ class ClickTest extends TestCase
      * Logs user in.
      * @param string $url login url.
      * @param array $post login post.
+     * @throws \Exception
      * @return object $this self instance
      */
     public function login($url, $post)
     {
         $getResult = $this->request($url)->response;
-        if (!preg_match('/name\=\"' . quotemeta(key($post)) . '\"/', $getResult)) {
-            return $this;
+        $inputName = quotemeta(key($post));
+        //echo $this->request($url, $post)->response;exit;
+        if (!preg_match('/name\=\"' . $inputName . '\"/', $getResult)) {
+            throw new \Exception("Could not get page with {$inputName} on {$url}");
         }
         $doc = \phpQuery::newDocument($getResult);
         foreach ($doc->find("[name=_csrf]") as $el) {
