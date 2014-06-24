@@ -39,7 +39,7 @@ Usage:
 ------
 -----
 ```
-    Unit tests:  
+    Unit tests:
     1. define @example docblock in your tested class method descriptions:
         /**
          * Returns user default name
