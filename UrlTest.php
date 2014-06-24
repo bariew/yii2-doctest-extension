@@ -27,10 +27,7 @@ class UrlTest extends UnitTest
     {
         assert($example, " in {$this->className}::{$methodName}()"); 
     }
-<<<<<<< HEAD
-    
-    protected function request($url, $post = [], $files = [])
-=======
+
     /**
      * sends post request
      * @param string $url post url
@@ -48,16 +45,11 @@ class UrlTest extends UnitTest
      * @return string response body
      */
     public function get($url)
->>>>>>> b79c8910c297ef4222570383ff4edafaf2da4473
     {
         return $this->getCurl()->request($url, false);
     }
 
-<<<<<<< HEAD
-    protected function buildCuery($arrays, &$new = array(), $prefix = null)
-=======
     public function getCurl($options = [])
->>>>>>> b79c8910c297ef4222570383ff4edafaf2da4473
     {
         return new Curl($options);
     }
