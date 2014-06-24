@@ -77,7 +77,7 @@ class Curl
             $arrays = get_object_vars($arrays);
         }
 
-        foreach($arrays AS $key => $value){
+        foreach($arrays as $key => $value){
             $k = isset($prefix)
                 ? $prefix . '[' . $key . ']'
                 : $key;

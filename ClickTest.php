@@ -61,7 +61,15 @@ class ClickTest
      */
     public $errors = [];
 
+    /**
+     * @var integer start timestamp
+     */
     protected $startTime;
+
+    /**
+     * @var bool whether to skip urls with the same path (but different GET params)
+     */
+    public $groupUrls = false;
 
     /**
      * @inheritdoc
@@ -161,6 +169,7 @@ class ClickTest
     protected function filterUrl($url)
     {
         $preparedUrl = $this->prepareUrl($url);
+        $parsedUrl = parse_url($url);
         if (in_array($preparedUrl, $this->passedUrls)) {
             return true;
         }
@@ -168,7 +177,10 @@ class ClickTest
         if (in_array($url, $this->visited)) {
             return true;
         }
-        $parsedUrl = parse_url($url);
+        $regexp = '/'. str_replace('/', '\/', @$parsedUrl['path']) . '/';
+        if ($this->groupUrls && preg_grep($regexp, $this->visited)) {
+            return true;
+        }
         if (isset($parsedUrl['host']) && !strpos($this->baseUrl, $parsedUrl['host'])) {
             return true;
         }
