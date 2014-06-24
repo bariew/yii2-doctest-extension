@@ -4,6 +4,7 @@
     "type": "yii2-extension",
     "keywords": ["yii2","extension","test"],
     "license": "BSD-3-Clause",
+    "minimum-stability" : "dev",
     "authors": [
         {
             "name": "Bariev Pavel",
