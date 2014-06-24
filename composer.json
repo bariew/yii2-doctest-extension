@@ -11,7 +11,8 @@
         }
     ],
     "require": {
-        "bariew/phpquery": "dev-master"
+        "bariew/phpquery": "dev-master",
+        "chuyskywalker/rolling-curl": "dev-master"
     },
     "autoload": {
         "psr-4": {
