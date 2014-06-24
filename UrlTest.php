@@ -1,7 +1,21 @@
 <?php
-
+/**
+ * UrlTest class file.
+ * @copyright (c) 2013, Galament
+ * @license http://www.opensource.org/licenses/bsd-license.php
+ */
 namespace bariew\docTest;
-
+/**
+ * Tests url requests results using class @example docblocks as assets.
+ * 
+ * Usage:
+ *    1. define @example docblocks in your target class method descriptions:
+ *       $this->post("http://mySite.com/myPath", ["myParam"=>"MyValue"]) == '{"code":200, "message":"OK"}'
+ *    2. Call DocTest from your test script: 
+ *        $docTester = new \bariew\docTest\UnitTest("app\models\User");
+ *        $docTester->test();
+ * @author Pavel Bariev <bariew@yandex.ru>
+ */
 class UrlTest extends UnitTest
 {    
     /* TESTING */
@@ -15,14 +29,8 @@ class UrlTest extends UnitTest
     {
         return $this->request($url, false);
     }
-
     
-    public function clear($string)
-    {
-        return preg_replace('/\W*/', '', $string);
-    }
-    
-    public function request($url, $post = [], $files = [])
+    protected function request($url, $post = [], $files = [])
     {
         $curlOptions = [
             CURLOPT_URL             => $url,
@@ -60,7 +68,7 @@ class UrlTest extends UnitTest
         return $body;
     }
 
-    function buildCuery($arrays, &$new = array(), $prefix = null)
+    protected function buildCuery($arrays, &$new = array(), $prefix = null)
     {
         if(is_object($arrays)){
             $arrays = get_object_vars($arrays);

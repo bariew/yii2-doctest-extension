@@ -27,17 +27,33 @@ Usage
 -----
 ```
     Unit tests:  
-    define @example docblocks in your target class method descriptions:
-        @example app\models\User::instantiate()->getDefaultName() == "Paul"
-    Call DocTest from your test script: 
+    1. define @example docblocks in your target class method descriptions:
+        /**
+         * returns user default name
+         * @param string $methodName the name of tested method
+         * @return boolean true if no examples in dockblocks provided
+         * @example $this->getDefaultName() == "Mr. Smith"
+         */
+        protected function getDefaultName()
+        {
+            return "Mr. Smith"
+        }
+
+    2. Call DocTest from your test script: 
         $docTester = new \bariew\docTest\UnitTest("app\models\User");
         $docTester->test();
 ```
 ```
     Url tests:  
-    define @example docblocks in your target class method descriptions:
+    1. define @example docblocks in your target class method descriptions:
         $this->post("http://mySite.com/myPath", ["myParam"=>"MyValue"]) == '{"code":200, "message":"OK"}'
-    Call DocTest from your test script: 
+    2. Call DocTest from your test script: 
         $docTester = new \bariew\docTest\UnitTest("app\models\User");
         $docTester->test();
+```
+
+```
+    You may also define your own docblock tag name, e.g. 
+    1. * @test ... assert impression
+    2. $docTester = new UnitTest("My\Class\Name", ['tagName' => @test]);
 ```
