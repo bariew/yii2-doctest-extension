@@ -11,6 +11,9 @@
             "email": "bariew@yandex.ru"
         }
     ],
+    "require": {
+        "electrolinux/phpquery": "dev-master"
+    },
     "autoload": {
         "psr-4": {
             "bariew\\docTest\\": ""
