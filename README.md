@@ -70,5 +70,5 @@ Usage:
 
 ```
     Click tests:
-    1. 
+    1.
 ```

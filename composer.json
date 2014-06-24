@@ -2,7 +2,6 @@
     "name": "bariew/yii2-doctest-extension",
     "description": "Executes @example docBlock params as test cases",
     "type": "yii2-extension",
-    "version": "0.2.0",
     "keywords": ["yii2","extension","test"],
     "license": "BSD-3-Clause",
     "authors": [
