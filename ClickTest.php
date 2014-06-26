@@ -89,7 +89,7 @@ class ClickTest
      * Clicks all link on page recursively.
      * @param string $url base path for page to click all links on.
      */
-    public function clickAllLinks($url = '')
+    public function clickAllLinks($url = '/')
     {
         if (!$this->startTime) {
             $this->startTime = time();
@@ -153,11 +153,7 @@ class ClickTest
             if ($this->filterUrl($url)) {
                 continue;
             }
-            try {
-                $this->clickAllLinks($url);
-            } catch (\Exception $ex) {
-                $this->errors[] = "Could not open page at {$url}";
-            }
+            $this->clickAllLinks($url);
         }
     }
 
@@ -224,12 +220,11 @@ class ClickTest
     public function login($url, $post)
     {
         $getResult = $this->request($url)->response;
-        $inputName = quotemeta(key($post));
-        //echo $this->request($url, $post)->response;exit;
-        if (!preg_match('/name\=\"' . $inputName . '\"/', $getResult)) {
+        $doc = \phpQuery::newDocument($getResult);
+        $inputName = key($post);
+        if (!$doc->find("[name='{$inputName}']")->length) {
             throw new \Exception("Could not get page with {$inputName} on {$url}");
         }
-        $doc = \phpQuery::newDocument($getResult);
         foreach ($doc->find("[name=_csrf]") as $el) {
             $post['_csrf'] = pq($el)->attr('value');
         }
