@@ -42,8 +42,6 @@ class ClickTest
     public $except = [
         '/\/logout$/',
         '/\/delete/',
-        '/#/',
-        '/sort=/'
     ];
 
     /**
@@ -71,6 +69,9 @@ class ClickTest
      */
     public $groupUrls = false;
 
+    /**
+     * @var array curl options.
+     */
     public $curlOptions = [];
     /**
      * @inheritdoc
