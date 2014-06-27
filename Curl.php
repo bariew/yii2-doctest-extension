@@ -16,7 +16,7 @@ class Curl
     public $headers = [];
     public $body = '';
     public $cookieFile = '/tmp/clickTestCookie';
-
+    public $options = [];
     /**
      * sends curl request
      * @param string $url post url
@@ -28,7 +28,7 @@ class Curl
     {
         $this->url = $url;
         $this->post = $post;
-        $curlOptions = [
+        $curlOptions = $this->options + [
             CURLOPT_URL             => $url,
             CURLOPT_RETURNTRANSFER  => true,
             CURLOPT_CONNECTTIMEOUT  => 60,
@@ -135,5 +135,10 @@ class Curl
         }
         $headers = $num === false ? end($this->headers) : $this->headers[$num];
         return $headers[$key];
+    }
+
+    public function __construct($options = [])
+    {
+        $this->options = $options;
     }
 } 

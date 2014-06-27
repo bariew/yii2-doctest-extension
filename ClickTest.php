@@ -71,6 +71,7 @@ class ClickTest
      */
     public $groupUrls = false;
 
+    public $curlOptions = [];
     /**
      * @inheritdoc
      */
@@ -233,11 +234,10 @@ class ClickTest
 
     /**
      * Gets Curl object instance.
-     * @param array $options curl options.
      * @return Curl curl instance
      */
-    public function getCurl($options = [])
+    public function getCurl()
     {
-        return $this->_curl ? $this->_curl : ($this->_curl = new Curl($options));
+        return $this->_curl ? $this->_curl : ($this->_curl = new Curl($this->curlOptions));
     }
 }
