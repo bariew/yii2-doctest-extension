@@ -7,6 +7,9 @@
 
 namespace bariew\docTest;
 
+use RollingCurl\Request;
+use RollingCurl\RollingCurl;
+
 /**
  * Description.
  *
@@ -16,11 +19,15 @@ namespace bariew\docTest;
 class Curl
 {
     public $url;
-    public $post;
-    public $headers = [];
-    public $body = '';
+    public $headers;
+    public $body;
     public $cookieFile = '/tmp/clickTestCookie';
     public $options = [];
+    /**
+     * @var array response data with url key.
+     */
+    public $response = [];
+
     /**
      * sends curl request
      * @param string $url post url
@@ -30,13 +37,24 @@ class Curl
      */
     public function request($url, $post = [], $files = [])
     {
-        if (!file_exists($this->cookieFile)) {
-            touch($this->cookieFile);
-            chmod($this->cookieFile, 0777);
-        }
         $this->url = $url;
-        $this->post = $post;
-        $curlOptions = $this->options + [
+        $ch = curl_init();
+        curl_setopt_array($ch, $this->getCurlOptions($url, $post, $files));
+        $result = curl_exec($ch);
+        $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+        curl_close($ch);
+        $this->headers = $this->setHeaders(substr($result, 0, $header_size));
+        return $this->body = substr($result, $header_size);
+    }
+
+    public function callback(Request $request, RollingCurl $rollingCurl)
+    {
+
+    }
+
+    public function getCurlOptions($url, $post = [], $files = [])
+    {
+        $result = $this->options + [
             CURLOPT_URL             => $url,
             CURLOPT_RETURNTRANSFER  => true,
             CURLOPT_CONNECTTIMEOUT  => 60,
@@ -50,7 +68,7 @@ class Curl
             CURLOPT_COOKIEFILE      => $this->cookieFile,
             CURLOPT_VERBOSE         => false,
         ];
-        if($files){
+        if($files && is_array($files)){
             foreach(array_keys($files['name']) as $name){
                 if(!$path = @$files['tmp_name'][$name]){
                     continue;
@@ -58,19 +76,12 @@ class Curl
                 $post[get_class($this)][$name] = "@{$path};filename=" . basename($files['name'][$name]);
             }
         }
-        if($post){
+        if($post && is_array($post)){
             $this->buildQuery($post, $postQuery);
-            $curlOptions[CURLOPT_POST]            = true;
-            $curlOptions[CURLOPT_POSTFIELDS]      = $postQuery;
+            $result[CURLOPT_POST]            = true;
+            $result[CURLOPT_POSTFIELDS]      = $postQuery;
         }
-
-        $ch = curl_init();
-        curl_setopt_array($ch, $curlOptions);
-        $result = curl_exec($ch);
-        $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-        curl_close($ch);
-        $this->headers = $this->setHeaders(substr($result, 0, $header_size));
-        return $this->body = substr($result, $header_size);
+        return $result;
     }
     /**
      * Creates post query string with subqueries
@@ -164,5 +175,26 @@ class Curl
     public function __construct($options = [])
     {
         $this->options = $options;
+        if (!file_exists($this->cookieFile)) {
+            touch($this->cookieFile);
+            chmod($this->cookieFile, 0777);
+        }
+    }
+
+    public function multiRequest($data, $callback)
+    {
+        $rollingCurl = new RollingCurl();
+
+        foreach ($data as $url => $options) {
+            if (is_string($options)) {
+                $url = $options;
+            }
+            $request = new Request($url);
+            $curlOptions = $this->getCurlOptions($url, @$options['post'], @$options['files']);
+            $request->setOptions($curlOptions);
+            $rollingCurl->add($request);
+        }
+
+        $rollingCurl->setCallback($callback)->execute();
     }
 } 

@@ -6,6 +6,7 @@
  */
 namespace bariew\docTest;
 
+use RollingCurl\Request;
 use \Yii;
 
 /**
@@ -89,76 +90,63 @@ class ClickTest
 
     /**
      * Clicks all link on page recursively.
-     * @param string $url base path for page to click all links on.
+     * @param string $startUrl base path for page to click all links on.
      * @return \self $this this
      */
-    public function clickAllLinks($url = '/')
+    public function clickAllLinks($startUrl = '/')
     {
         if (!$this->startTime) {
             $this->startTime = time();
         }
-        $startUrl = $this->prepareUrl($url);
-        $this->visited[] = $startUrl;
-        $this->visitUrls($this->getPageUrls($startUrl));
+        $startUrl = $this->prepareUrl($startUrl);
+        $this->visited[] = $this->passedUrls[] = $startUrl;
+        $this->getCurl()->multiRequest([$startUrl], function($request) {
+            return $this->visitContentUrls($request);
+        });
         return $this;
     }
 
-    /**
-     * Adds base path to url.
-     * @param string $url url.
-     * @return string Full url.
-     */
-    protected function prepareUrl($url)
+    public function visitContentUrls(Request $request)
     {
-        return $this->baseUrl . str_replace($this->baseUrl, "", $url);
+        if ($this->responseCode($request, 'http_code') >= 400) {
+            return $this->errors[$request->getUrl()] = $this->responseCode($request, 'http_code');
+        }
+        if (!$urls = $this->getPageUrls($request->getResponseText())) {
+            return;
+        }
+
+        $this->visited = array_merge($this->visited, $urls);
+        $this->getCurl()->multiRequest($urls, function($request) {
+            return $this->visitContentUrls($request);
+        });
     }
 
-    /**
-     * echoes result errors if any
-     */
-    public function result()
+    public function responseCode(Request $request, $key)
     {
-        echo "\n Checked " . count($this->visited) . " urls in " . (time()-$this->startTime) . " sec. \n\n";
-        if ($this->errors) {
-            echo "\n Errors:";
-            foreach ($this->errors as $url => $code) {
-                echo "\n {$url} - {$code} \n";
-            }
-            exit(1);
-        } else {
-            exit("\n OK! \n");
-        }
+        $info = $request->getResponseInfo();
+        return @$info[$key];
     }
+
+
+
     /**
      * Finds all page urls.
-     * @param string $url
+     * @param string $body page body.
      * @return array urls
      */
-    protected function getPageUrls($url)
+    protected function getPageUrls($body)
     {
-        if (!$body = $this->request($url)->response){
-            return [];
-        }
         $result = [];
         $doc = \phpQuery::newDocument($body);
         foreach ($doc->find($this->selector) as $el) {
-            $result[] = pq($el)->attr('href');
-        }
-        return $result;
-    }
-
-    /**
-     * Clicks urls.
-     * @param array $urls urls
-     */
-    protected function visitUrls($urls)
-    {
-        foreach ($urls as $url) {
+            $this->passedUrls[] = $url = pq($el)->attr('href');
             if ($this->filterUrl($url)) {
                 continue;
             }
-            $this->clickAllLinks($url);
+            $this->visited[] = $url;
+            $result[] = $this->prepareUrl($url);
         }
+        return $result;
     }
 
     /**
@@ -168,12 +156,7 @@ class ClickTest
      */
     protected function filterUrl($url)
     {
-        $preparedUrl = $this->prepareUrl($url);
         $parsedUrl = parse_url($url);
-        if (in_array($preparedUrl, $this->passedUrls)) {
-            return true;
-        }
-        $this->passedUrls[] = $preparedUrl;
         if (in_array($url, $this->visited)) {
             return true;
         }
@@ -242,5 +225,32 @@ class ClickTest
     public function getCurl()
     {
         return $this->_curl ? $this->_curl : ($this->_curl = new Curl($this->curlOptions));
+    }
+
+    /**
+     * echoes result errors if any
+     */
+    public function result()
+    {
+        echo "\n Checked " . count($this->visited) . " urls in " . (time()-$this->startTime) . " sec. \n\n";
+        if ($this->errors) {
+            echo "\n Errors:";
+            foreach ($this->errors as $url => $code) {
+                echo "\n {$url} - {$code} \n";
+            }
+            exit(1);
+        } else {
+            exit("\n OK! \n");
+        }
+    }
+
+    /**
+     * Adds base path to url.
+     * @param string $url url.
+     * @return string Full url.
+     */
+    protected function prepareUrl($url)
+    {
+        return $this->baseUrl . str_replace($this->baseUrl, "", $url);
     }
 }
