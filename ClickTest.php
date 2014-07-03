@@ -90,6 +90,7 @@ class ClickTest
     /**
      * Clicks all link on page recursively.
      * @param string $url base path for page to click all links on.
+     * @return \self $this this
      */
     public function clickAllLinks($url = '/')
     {
@@ -99,6 +100,7 @@ class ClickTest
         $startUrl = $this->prepareUrl($url);
         $this->visited[] = $startUrl;
         $this->visitUrls($this->getPageUrls($startUrl));
+        return $this;
     }
 
     /**

@@ -1,14 +1,18 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: pt
- * Date: 6/24/14
- * Time: 10:48 AM
+ * Curl class file.
+ * @copyright (c) 2014, Galament
+ * @license http://www.opensource.org/licenses/bsd-license.php
  */
 
 namespace bariew\docTest;
 
-
+/**
+ * Description.
+ *
+ * Usage:
+ * @author Pavel Bariev <bariew@yandex.ru>
+ */
 class Curl
 {
     public $url;
@@ -26,6 +30,10 @@ class Curl
      */
     public function request($url, $post = [], $files = [])
     {
+        if (!file_exists($this->cookieFile)) {
+            touch($this->cookieFile);
+            chmod($this->cookieFile, 0777);
+        }
         $this->url = $url;
         $this->post = $post;
         $curlOptions = $this->options + [
@@ -89,6 +97,11 @@ class Curl
         }
     }
 
+    /**
+     * Gets cookie value.
+     * @param string $key cookie key in array.
+     * @return mixed cookie value.
+     */
     public function getCookie($key)
     {
         $cookies = file_get_contents($this->cookieFile);
@@ -120,6 +133,10 @@ class Curl
         return $headers;
     }
 
+    /**
+     * Checks response headers for 0-399 http code range.
+     * @return bool whether request is successful
+     */
     public function isSuccess()
     {
         if (!preg_match('/ (\d+) /', $this->getHeader('http_code'), $matches)) {
@@ -128,6 +145,13 @@ class Curl
         return $matches[1] < 400; // http response code;
     }
 
+    /**
+     * Gets header value.
+     * @param string $key header name.
+     * @param mixed $num number of headers array (if many in response)
+     * @return string header value.
+     * @throws \Exception exception Could not connect.
+     */
     public function getHeader($key, $num = false)
     {
         if (!$this->headers) {
