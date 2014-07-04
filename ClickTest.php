@@ -116,7 +116,7 @@ class ClickTest
         }
 
         $this->visited = array_merge($this->visited, $urls);
-        $this->getCurl()->multiRequest($urls, function($request) {
+        $this->getCurl()->loadMultiRequest($urls, function($request) {
             return $this->visitContentUrls($request);
         });
     }
