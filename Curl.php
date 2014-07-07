@@ -24,7 +24,6 @@ class Curl
     public $cookieFile = '/tmp/clickTestCookie';
     public $options = [];
 
-    public $multiLimit = 30;
     /**
      * @var array response data with url key.
      */
@@ -49,6 +48,13 @@ class Curl
         return $this->body = substr($result, $header_size);
     }
 
+    /**
+     * Creates curl request options.
+     * @param string $url request url.
+     * @param array $post post data.
+     * @param array $files files.
+     * @return array prepared curl request options.
+     */
     public function getCurlOptions($url, $post = [], $files = [])
     {
         $result = $this->options + [
@@ -80,6 +86,7 @@ class Curl
         }
         return $result;
     }
+
     /**
      * Creates post query string with subqueries
      * @param array $arrays params
@@ -169,15 +176,26 @@ class Curl
         return $headers[$key];
     }
 
+    /**
+     * Sets self options.
+     * @param array $options options.
+     */
     public function __construct($options = [])
     {
-        $this->options = $options;
+        foreach ($options as $attribute => $value) {
+            $this->$attribute = $value;
+        }
         if (!file_exists($this->cookieFile)) {
             touch($this->cookieFile);
             chmod($this->cookieFile, 0777);
         }
     }
 
+    /**
+     * Sends rolling curl multirequest.
+     * @param array $data curl request data as [url, url, ...] or [url=>['post'=>[...], 'files'=>[...]]]
+     * @param \Closure $callback callback at response.
+     */
     public function multiRequest($data, $callback)
     {
         $rollingCurl = new RollingCurl();
@@ -193,46 +211,5 @@ class Curl
         }
 
         $rollingCurl->setCallback($callback)->execute();
-    }
-
-
-    protected $multiRequestStorage = [
-        'data' => [],
-        'callback' => null
-    ];
-
-    protected $multiInProcess = 0;
-
-    public function loadMultiRequest($data, $callback, $force = false)
-    {
-        $this->multiRequestStorage['data'] = array_merge($this->multiRequestStorage['data'], $data);
-        if (!$this->multiRequestStorage['callback']) {
-            $this->multiRequestStorage['callback'] = $callback;
-        }
-        if (count($this->multiRequestStorage['data']) >= $this->multiLimit) {
-            $this->releaseMultiRequest();
-        } else if ($force || !$this->multiInProcess) {
-            $this->releaseMultiRequest(true);
-        }
-
-    }
-
-    public function releaseMultiRequest($force = false)
-    {
-        $requests = array_chunk($this->multiRequestStorage['data'], $this->multiLimit, true);
-        foreach ($requests as $data) {
-            if (!$force && count($data) < $this->multiLimit) {
-                continue;
-            }
-            $this->multiRequestStorage['data'] = array_diff_key(
-                $this->multiRequestStorage['data'], $data
-            );
-            echo count($data) . "\n\n";
-            $this->multiInProcess += count($data);
-            $this->multiRequest($data, function (Request $request, RollingCurl $curl) {
-                $this->multiInProcess--;
-                $this->multiRequestStorage['callback']($request, $curl);
-            });
-        }
     }
 } 
