@@ -74,6 +74,7 @@ class ClickTest
      * @var array curl options.
      */
     public $curlOptions = [];
+
     /**
      * @inheritdoc
      */
@@ -106,10 +107,16 @@ class ClickTest
         return $this;
     }
 
+    /**
+     * Callback for curl multirequests.
+     * Gets urls from response body and calls multicurl again.
+     * @param Request $request curl request.
+     * @return mixed nevermind.
+     */
     public function visitContentUrls(Request $request)
     {
-        if ($this->responseCode($request, 'http_code') >= 400) {
-            return $this->errors[$request->getUrl()] = $this->responseCode($request, 'http_code');
+        if ($this->responseHeader($request, 'http_code') >= 400) {
+            return $this->errors[$request->getUrl()] = $this->responseHeader($request, 'http_code');
         }
         if (!$urls = $this->getPageUrls($request->getResponseText())) {
             return;
@@ -121,7 +128,13 @@ class ClickTest
         });
     }
 
-    public function responseCode(Request $request, $key)
+    /**
+     * gets response header value.
+     * @param Request $request curl request
+     * @param string $key header hey.
+     * @return string header value.
+     */
+    public function responseHeader(Request $request, $key)
     {
         $info = $request->getResponseInfo();
         return @$info[$key];

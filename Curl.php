@@ -23,6 +23,7 @@ class Curl
     public $body;
     public $cookieFile = '/tmp/clickTestCookie';
     public $options = [];
+
     /**
      * @var array response data with url key.
      */
@@ -47,11 +48,13 @@ class Curl
         return $this->body = substr($result, $header_size);
     }
 
-    public function callback(Request $request, RollingCurl $rollingCurl)
-    {
-
-    }
-
+    /**
+     * Creates curl request options.
+     * @param string $url request url.
+     * @param array $post post data.
+     * @param array $files files.
+     * @return array prepared curl request options.
+     */
     public function getCurlOptions($url, $post = [], $files = [])
     {
         $result = $this->options + [
@@ -83,6 +86,7 @@ class Curl
         }
         return $result;
     }
+
     /**
      * Creates post query string with subqueries
      * @param array $arrays params
@@ -172,15 +176,26 @@ class Curl
         return $headers[$key];
     }
 
+    /**
+     * Sets self options.
+     * @param array $options options.
+     */
     public function __construct($options = [])
     {
-        $this->options = $options;
+        foreach ($options as $attribute => $value) {
+            $this->$attribute = $value;
+        }
         if (!file_exists($this->cookieFile)) {
             touch($this->cookieFile);
             chmod($this->cookieFile, 0777);
         }
     }
 
+    /**
+     * Sends rolling curl multirequest.
+     * @param array $data curl request data as [url, url, ...] or [url=>['post'=>[...], 'files'=>[...]]]
+     * @param \Closure $callback callback at response.
+     */
     public function multiRequest($data, $callback)
     {
         $rollingCurl = new RollingCurl();
