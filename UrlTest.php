@@ -11,8 +11,8 @@ namespace bariew\docTest;
  * Usage:
  *    1. define @example docblocks in your target class method descriptions:
  *       $this->post("http://mySite.com/myPath", ["myParam"=>"MyValue"]) == '{"code":200, "message":"OK"}'
- *    2. Call DocTest from your test script: 
- *        $docTester = new \bariew\docTest\UnitTest("app\models\User");
+ *    2. Call DocTest from your test script:
+ *        $docTester = new \bariew\docTest\UrlTest('app\controllers\SiteController');
  *        $docTester->test();
  * @author Pavel Bariev <bariew@yandex.ru>
  */
@@ -25,7 +25,7 @@ class UrlTest extends UnitTest
      */
     protected function runExample($example, $methodName)
     {
-        assert($example, " in {$this->className}::{$methodName}()"); 
+        assert($example, " in {$this->className}::{$methodName}()");
     }
 
     /**
