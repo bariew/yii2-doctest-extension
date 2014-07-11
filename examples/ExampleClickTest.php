@@ -42,6 +42,8 @@ class ExampleClickTest extends \yii\codeception\TestCase
         $clickTest = new ClickTest("http://mydomain.com", [
             'groupUrls' => true,
             'curlOptions' => [
+                'groupUrls' => false,
+                'cookieFile' => '/tmp/clickTestCookie',
                 'options'   => [
                     CURLOPT_HTTPAUTH=> CURLAUTH_BASIC,
                     CURLOPT_USERPWD => 'myUser:myPassword'

@@ -100,7 +100,7 @@ class ClickTest
             $this->startTime = time();
         }
         $startUrl = $this->prepareUrl($startUrl);
-        $this->visited[] = $this->passedUrls[] = $startUrl;
+        $this->visited[] = $startUrl;
         $this->getCurl()->multiRequest([$startUrl], function($request) {
             return $this->visitContentUrls($request);
         });
@@ -121,8 +121,6 @@ class ClickTest
         if (!$urls = $this->getPageUrls($request->getResponseText())) {
             return;
         }
-
-        $this->visited = array_merge($this->visited, $urls);
         $this->getCurl()->multiRequest($urls, function($request) {
             return $this->visitContentUrls($request);
         });
@@ -152,12 +150,11 @@ class ClickTest
         $result = [];
         $doc = \phpQuery::newDocument($body);
         foreach ($doc->find($this->selector) as $el) {
-            $this->passedUrls[] = $url = pq($el)->attr('href');
+            $url = $this->passedUrls[] = pq($el)->attr('href');
             if ($this->filterUrl($url)) {
                 continue;
             }
-            $this->visited[] = $url;
-            $result[] = $this->prepareUrl($url);
+            $result[] = $this->visited[] = $this->prepareUrl($url);
         }
         return $result;
     }
