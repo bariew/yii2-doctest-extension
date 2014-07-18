@@ -81,6 +81,7 @@ class ClickTest
      */
     public $curlOptions = [];
 
+    protected $urlCounter = 1;
     /**
      * @inheritdoc
      */
@@ -102,6 +103,8 @@ class ClickTest
      */
     public function clickAllLinks($startUrl = '/')
     {
+        ob_end_flush();
+        echo "\n\n Visiting app urls: \n";
         if (!$this->startTime) {
             $this->startTime = time();
         }
@@ -121,7 +124,10 @@ class ClickTest
      */
     public function visitContentUrls(Request $request)
     {
-        if ($this->responseHeader($request, 'http_code') >= 400) {
+        $result =  $request->getResponseInfo();
+        echo "\n" . $this->urlCounter++ .". {$result['url']} (", round($result['total_time'], 1)
+            . " sec.) - {$result['http_code']} " . ($result['http_code'] < 400 ? "OK" : "ERROR");
+        if ($result['http_code'] >= 400) {
             return $this->errors[$request->getUrl()] = $this->responseHeader($request, 'http_code');
         }
         if (!$urls = $this->getPageUrls($request->getResponseText())) {

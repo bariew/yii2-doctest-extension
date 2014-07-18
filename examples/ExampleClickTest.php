@@ -28,7 +28,6 @@ class ExampleClickTest extends \yii\codeception\TestCase
     {
         $clickTest = $this->getClickTest();
         $clickTest->clickAllLinks('/');
-        // display result.
         $clickTest->result();
     }
 
@@ -39,26 +38,30 @@ class ExampleClickTest extends \yii\codeception\TestCase
     public function getClickTest()
     {
         // init clicktest with required base url param.
-        $clickTest = new ClickTest("http://mydomain.com", [
+        $params = Yii::$app->params;
+        $clickTest = new ClickTest($params['domainName'], [
             'groupUrls' => true,
+            'createExcepts' => [
+                [['(.*\/)', false],['(\d+)', true]]
+            ],
             'curlOptions' => [
-                'groupUrls' => false,
-                'cookieFile' => '/tmp/clickTestCookie',
+                'cookieFile' => Yii::$app->params['curlCookieFile'],
                 'options'   => [
                     CURLOPT_HTTPAUTH=> CURLAUTH_BASIC,
-                    CURLOPT_USERPWD => 'myUser:myPassword'
+                    CURLOPT_USERPWD => $params['httpAuth']['username'].':'.$params['httpAuth']['password']
                 ]
             ]
         ]);
         $clickTest->selector = 'a:not([href=""])';
-        $clickTest->except[] = '/files/';
+        $clickTest->except[] = '/storage/';
 
         // login to your login page with your access data.
         $clickTest->request(
-            '/logout'
-        )->login('/login', [
-                    'LoginForm[username]'=>'User',
-                    'LoginForm[password]'=>'my password',
+            '/index/logout'
+        )->login('/index/login', [
+                    'LoginForm[username]'=>'Alena',
+                    'LoginForm[password]'=>'password',
+                    'LoginForm[language]'=>'en',
                     // click all site links recursively starting from root '/' url.
                 ]);
         return $clickTest;
