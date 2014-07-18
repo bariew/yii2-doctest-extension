@@ -4,7 +4,7 @@
  * @copyright (c) 2014, Galament
  * @license http://www.opensource.org/licenses/bsd-license.php
  */
-
+namespace bariew\docTest\examples;
 use \bariew\docTest\ClickTest;
 
 /**
