@@ -69,12 +69,19 @@ class ClickTest
      * @var bool whether to skip urls with the same path (but different GET params)
      */
     public $groupUrls = false;
+    
+    /**
+     * @var array regexps to add to exception like [['(.*\/)', false],['(\d+)', true]]
+     * @see $this->createExcept() docs.
+     */
+    public $createExcepts = [];
 
     /**
      * @var array curl options.
      */
     public $curlOptions = [];
 
+    protected $urlCounter = 1;
     /**
      * @inheritdoc
      */
@@ -96,6 +103,8 @@ class ClickTest
      */
     public function clickAllLinks($startUrl = '/')
     {
+        ob_end_flush();
+        echo "\n\n Visiting app urls: \n";
         if (!$this->startTime) {
             $this->startTime = time();
         }
@@ -115,7 +124,10 @@ class ClickTest
      */
     public function visitContentUrls(Request $request)
     {
-        if ($this->responseHeader($request, 'http_code') >= 400) {
+        $result =  $request->getResponseInfo();
+        echo "\n" . $this->urlCounter++ .". {$result['url']} (", round($result['total_time'], 1)
+            . " sec.) - {$result['http_code']} " . ($result['http_code'] < 400 ? "OK" : "ERROR");
+        if ($result['http_code'] >= 400) {
             return $this->errors[$request->getUrl()] = $this->responseHeader($request, 'http_code');
         }
         if (!$urls = $this->getPageUrls($request->getResponseText())) {
@@ -177,11 +189,13 @@ class ClickTest
         if (isset($parsedUrl['host']) && !strpos($this->baseUrl, $parsedUrl['host'])) {
             return true;
         }
-
         foreach ($this->except as $filter) {
             if (preg_match($filter, $url)) {
                 return true;
             }
+        }
+        foreach ($this->createExcepts as $patternAr) {
+            $this->createExcept($url, $patternAr);
         }
         return false;
     }
@@ -262,5 +276,31 @@ class ClickTest
     protected function prepareUrl($url)
     {
         return $this->baseUrl . str_replace($this->baseUrl, "", $url);
+    }
+
+    /**
+     * Generates new except regexp rule based on string and regexp array.
+     * E.g. $string 'http://lkoffice.dev2/customer/note/view/5429/set'
+     * and $patternAr = [['(.*\/)', false], ['(\d+)', true],['(\/\w+)', false]];
+     * Will return '/http\:\/\/lkoffice\.dev2\/customer\/note\/view\/(\d+)\/set/' regexp.
+     * @param string $string compared string to regexp.
+     * @param array $patternAr array of regex parts with remark true/false whether part is variable.
+     * @return bool|string regular expression.
+     */
+    protected function createExcept($string, $patternAr)
+    {
+        $pattern = '/';
+        foreach($patternAr as $data) {
+            $pattern .= $data[0];
+        }
+        $pattern .= '/';
+        if (!preg_match($pattern, $string, $matches)) {
+            return false;
+        }
+        $result = '';
+        foreach($patternAr as $key => $data){
+            $result .= $data[1] ? $data[0] : preg_quote($matches[$key+1], '/');
+        }
+        return $this->except[] = '/'.$result .'/';
     }
 }
