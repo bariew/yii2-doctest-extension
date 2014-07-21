@@ -68,7 +68,7 @@ class ClickTest
     /**
      * @var bool whether to skip urls with the same path (but different GET params)
      */
-    public $groupUrls = false;
+    public $groupUrls = true;
     
     /**
      * @var array regexps to add to exception like [['(.*\/)', false],['(\d+)', true]]
@@ -88,8 +88,8 @@ class ClickTest
     public function __construct($baseUrl, $options = [])
     {
         $this->baseUrl = $baseUrl;
-        set_time_limit(0);
-        ini_set('memory_limit', '-1');
+/*        set_time_limit(0);
+        ini_set('memory_limit', '-1');*/
         ini_set("xdebug.max_nesting_level", 1000);
         foreach ($options as $option => $value) {
             $this->$option = $value;
@@ -179,7 +179,8 @@ class ClickTest
     protected function filterUrl($url)
     {
         $parsedUrl = parse_url($url);
-        if (in_array($url, $this->visited)) {
+        $fullUrl = $this->prepareUrl($url);
+        if (in_array($fullUrl, $this->visited)) {
             return true;
         }
         $regexp = '/'. str_replace('/', '\/', @$parsedUrl['path']) . '/';
