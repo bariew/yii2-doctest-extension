@@ -163,7 +163,7 @@ class ClickTest
         $doc = \phpQuery::newDocument($body);
         foreach ($doc->find($this->selector) as $el) {
             $url = $this->passedUrls[] = pq($el)->attr('href');
-            if ($this->filterUrl($url)) {
+            if (pq($el)->attr('disabled') || pq($el)->attr('data-method') || $this->filterUrl($url)) {
                 continue;
             }
             $result[] = $this->visited[] = $this->prepareUrl($url);
