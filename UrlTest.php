@@ -17,7 +17,12 @@ namespace bariew\docTest;
  * @author Pavel Bariev <bariew@yandex.ru>
  */
 class UrlTest extends UnitTest
-{    
+{
+    public $baseUrl;
+    public $curlOptions = [];
+
+    public $response;
+
     /* TESTING */
 
     /**
@@ -25,7 +30,8 @@ class UrlTest extends UnitTest
      */
     protected function runExample($example, $methodName)
     {
-        assert($example, " in {$this->className}::{$methodName}()");
+        $result = @assert($example);
+        assert($result, " in {$this->className}::{$methodName}(). Result: \n{$this->response}");
     }
 
     /**
@@ -36,8 +42,8 @@ class UrlTest extends UnitTest
      * @return string response body
      */
     public function post($url, $params = [], $files = [])
-    {
-        return $this->getCurl()->request($url, $params, $files);
+    {//echo preg_replace('/\s/', '', $this->getCurl()->request($url, $params, $files));exit;
+        return $this->response = $this->getCurl($this->curlOptions)->request($url, $params, $files);
     }
     /**
      * sends get request
@@ -46,7 +52,7 @@ class UrlTest extends UnitTest
      */
     public function get($url)
     {
-        return $this->getCurl()->request($url, false);
+        return $this->response = $this->getCurl($this->curlOptions)->request($url, false);
     }
 
     public function getCurl($options = [])
