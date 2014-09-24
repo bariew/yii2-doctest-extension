@@ -43,6 +43,7 @@ class ClickTest
     public $except = [
         '/\/logout$/',
         '/\/delete/',
+        '/^mailto/',
     ];
 
     /**
@@ -88,8 +89,8 @@ class ClickTest
     public function __construct($baseUrl, $options = [])
     {
         $this->baseUrl = $baseUrl;
-/*        set_time_limit(0);
-        ini_set('memory_limit', '-1');*/
+        set_time_limit(0);
+        ini_set('memory_limit', '-1');
         ini_set("xdebug.max_nesting_level", 1000);
         foreach ($options as $option => $value) {
             $this->$option = $value;
@@ -130,7 +131,7 @@ class ClickTest
         if ($result['http_code'] >= 400) {
             return $this->errors[$request->getUrl()] = $this->responseHeader($request, 'http_code');
         }
-        if (!$urls = $this->getPageUrls($request->getResponseText())) {
+        if (!$urls = $this->getPageUrls($request->getResponseText(), $result['url'])) {
             return;
         }
         $this->getCurl()->multiRequest($urls, function($request) {
@@ -151,18 +152,21 @@ class ClickTest
     }
 
 
-
     /**
      * Finds all page urls.
      * @param string $body page body.
+     * @param $parentUrl
      * @return array urls
      */
-    protected function getPageUrls($body)
+    protected function getPageUrls($body, $parentUrl)
     {
         $result = [];
         $doc = \phpQuery::newDocument($body);
         foreach ($doc->find($this->selector) as $el) {
             $url = $this->passedUrls[] = pq($el)->attr('href');
+//            if (strpos($url, 'email-closing/index')) {
+//                echo '--------'. $parentUrl;exit;
+//            }
             if (pq($el)->attr('disabled') || pq($el)->attr('data-method') || $this->filterUrl($url)) {
                 continue;
             }
