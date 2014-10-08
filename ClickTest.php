@@ -73,7 +73,7 @@ class ClickTest
     
     /**
      * @var array regexps to add to exception like [['(.*\/)', false],['(\d+)', true]]
-     * @see $this->createExcept() docs.
+     * @see ClickTest::createExcept()
      */
     public $createExcepts = [];
 
@@ -164,7 +164,7 @@ class ClickTest
         $doc = \phpQuery::newDocument($body);
         foreach ($doc->find($this->selector) as $el) {
             $url = $this->passedUrls[] = pq($el)->attr('href');
-//            if (strpos($url, 'email-closing/index')) {
+//            if (strpos($url, 'access/ip/user-index')) {
 //                echo '--------'. $parentUrl;exit;
 //            }
             if (pq($el)->attr('disabled') || pq($el)->attr('data-method') || $this->filterUrl($url)) {
