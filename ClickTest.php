@@ -82,7 +82,13 @@ class ClickTest
      */
     public $curlOptions = [];
 
+    /**
+     * @var bool whether to show visiting urls results in real time.
+     */
+    public $verbose = false;
+
     protected $urlCounter = 1;
+
     /**
      * @inheritdoc
      */
@@ -126,8 +132,10 @@ class ClickTest
     public function visitContentUrls(Request $request)
     {
         $result =  $request->getResponseInfo();
-        echo "\n" . $this->urlCounter++ .". {$result['url']} (", round($result['total_time'], 1)
-            . " sec.) - {$result['http_code']} " . ($result['http_code'] < 400 ? "OK" : "ERROR");
+        if ($this->verbose) {
+            echo "\n" . $this->urlCounter++ .". {$result['url']} (", round($result['total_time'], 1)
+                . " sec.) - {$result['http_code']} " . ($result['http_code'] < 400 ? "OK" : "ERROR");
+        }
         if ($result['http_code'] >= 400) {
             return $this->errors[$request->getUrl()] = $this->responseHeader($request, 'http_code');
         }
@@ -164,9 +172,9 @@ class ClickTest
         $doc = \phpQuery::newDocument($body);
         foreach ($doc->find($this->selector) as $el) {
             $url = $this->passedUrls[] = pq($el)->attr('href');
-//            if (strpos($url, 'access/ip/user-index')) {
-//                echo '--------'. $parentUrl;exit;
-//            }
+            if (strpos($url, 'ticket/main')) {
+                echo '--------'. $parentUrl;exit;
+            }
             if (pq($el)->attr('disabled') || pq($el)->attr('data-method') || $this->filterUrl($url)) {
                 continue;
             }
