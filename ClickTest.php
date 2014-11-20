@@ -172,9 +172,9 @@ class ClickTest
         $doc = \phpQuery::newDocument($body);
         foreach ($doc->find($this->selector) as $el) {
             $url = $this->passedUrls[] = pq($el)->attr('href');
-            if (strpos($url, 'ticket/main')) {
-                echo '--------'. $parentUrl;exit;
-            }
+//            if (strpos($url, 'ticket/main')) {
+//                echo '--------'. $parentUrl;exit;
+//            }
             if (pq($el)->attr('disabled') || pq($el)->attr('data-method') || $this->filterUrl($url)) {
                 continue;
             }
