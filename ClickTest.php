@@ -82,11 +82,6 @@ class ClickTest
      */
     public $curlOptions = [];
 
-    /**
-     * @var bool whether to show visiting urls results in real time.
-     */
-    public $verbose = false;
-
     protected $urlCounter = 1;
 
     /**
@@ -110,8 +105,6 @@ class ClickTest
      */
     public function clickAllLinks($startUrl = '/')
     {
-        ob_end_flush();
-        echo "\n\n Visiting app urls: \n";
         if (!$this->startTime) {
             $this->startTime = time();
         }
@@ -132,10 +125,6 @@ class ClickTest
     public function visitContentUrls(Request $request)
     {
         $result =  $request->getResponseInfo();
-        if ($this->verbose) {
-            echo "\n" . $this->urlCounter++ .". {$result['url']} (", round($result['total_time'], 1)
-                . " sec.) - {$result['http_code']} " . ($result['http_code'] < 400 ? "OK" : "ERROR");
-        }
         if ($result['http_code'] >= 400) {
             return $this->errors[$request->getUrl()] = $this->responseHeader($request, 'http_code');
         }
@@ -269,16 +258,11 @@ class ClickTest
      */
     public function result()
     {
-        echo "\n Checked " . count($this->visited) . " urls in " . (time()-$this->startTime) . " sec. \n\n";
-        if ($this->errors) {
-            echo "\n Errors:";
-            foreach ($this->errors as $url => $code) {
-                echo "\n {$url} - {$code} \n";
-            }
-            exit(1);
-        } else {
-            exit("\n OK! \n");
+        $errors = "";
+        foreach ($this->errors as $url => $code) {
+            $errors .= "\n {$url} - {$code}";
         }
+        return assert(!$this->errors, $errors);
     }
 
     /**
