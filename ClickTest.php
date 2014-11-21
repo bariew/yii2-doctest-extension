@@ -184,7 +184,7 @@ class ClickTest
         if (in_array($fullUrl, $this->visited)) {
             return true;
         }
-        $regexp = '/'. str_replace('/', '\/', @$parsedUrl['path']) . '/';
+        $regexp = '/'. preg_quote(@$parsedUrl['path'] , '/') . '/';
         if ($this->groupUrls && preg_grep($regexp, $this->visited)) {
             return true;
         }
