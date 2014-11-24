@@ -7,7 +7,6 @@
 namespace bariew\docTest;
 
 use RollingCurl\Request;
-use \Yii;
 
 /**
  * Clicks all site links.
