@@ -22,14 +22,38 @@ class Mock
     {
         $className        = str_replace('\\\\', '\\', '\\' . $className); // leaving only one leading slash
         $this->reflection = new \ReflectionClass($className);
-        $shortName        = $this->reflection->getShortName();
-        $newClass         = $this->reflection->getNamespaceName() . "\\{$shortName}MockGhost";
-        //if (!class_exists($newClass)) {
-            $this->createMockClass($mockData);
-        //}
-        $this->model = new $newClass($initData);
+        list($shortName, $fullName) = $this->generateClassName();
+        $this->createMockClass($shortName, $mockData);
+        $this->model = new $fullName($initData);
         $this->addData($mockData);
         return $this->model;
+    }
+
+    private function generateClassName()
+    {
+        $shortName = $this->reflection->getShortName();
+        $fullName = $this->reflection->getNamespaceName() . "\\{$shortName}Mock";
+        $counter = 1;
+        while(class_exists($fullName . $counter)) {
+            $counter++;
+        }
+        return ["{$shortName}Mock{$counter}", $fullName . $counter];
+    }
+
+    private function createMockClass($className, $mockData = [])
+    {
+        $shortName  = $this->reflection->getShortName();
+        $classStart = self::reflectionContent($this->reflection, 1, $this->reflection->getStartLine()-1);
+        $classStart .= PHP_EOL . "class {$className} extends $shortName" . PHP_EOL;
+        $this->body = self::reflectionBody($this->reflection, false);
+        foreach ($mockData as $attribute => $value) {
+            if (is_callable($value)) {
+                $this->insertMethod($attribute, $value);
+            } else {
+                $this->insertAttribute($attribute, $value);
+            }
+        }
+        eval($classStart . $this->body);
     }
 
     private function addData($mockData)
@@ -47,21 +71,6 @@ class Mock
         }
     }
 
-    private function createMockClass($mockData = [])
-    {
-        $shortName  = $this->reflection->getShortName();
-        $classStart = self::reflectionContent($this->reflection, 1, $this->reflection->getStartLine()-1);
-        $classStart .= PHP_EOL . "class {$shortName}MockGhost extends $shortName" . PHP_EOL;
-        $this->body = self::reflectionBody($this->reflection, false);
-        foreach ($mockData as $attribute => $value) {
-            if (is_callable($value)) {
-                $this->insertMethod($attribute, $value);
-            } else {
-                $this->insertAttribute($attribute, $value);
-            }
-        }
-        eval($classStart . $this->body);
-    }
 
     /**
      * @param \ReflectionClass | \ReflectionMethod | \ReflectionFunction $reflection
