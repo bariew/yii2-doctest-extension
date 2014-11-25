@@ -18,7 +18,7 @@ class FormTest
     private $selector = 'form';
 
     private $except = [];
-    private $visited = [];
+    public $visited = [];
 
     public function postData()
     {
@@ -42,7 +42,8 @@ class FormTest
         $result = [];
         foreach ($form->find('input, select, checkbox, textarea') as $input) {
             $el = pq($input);
-            if ($value = $el->attr('value')) {
+            if (
+                ($value = $el->attr('example')) || $value = $el->attr('value')) {
                 $result[$el->attr(('name'))] = $value;
                 continue;
             }

@@ -318,7 +318,7 @@ class ClickTest
      * @param $options
      * @return FormTest
      */
-    private function getFormTest($options)
+    private function getFormTest($options = [])
     {
         $this->_formTest = $this->_formTest ? $this->_formTest : new FormTest();
         $options = array_merge([

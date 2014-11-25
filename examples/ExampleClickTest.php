@@ -1,10 +1,10 @@
 <?php
 /**
- * ExampleClickTest class file.
+ * AllLinkClickTest class file.
  * @copyright (c) 2014, Galament
  * @license http://www.opensource.org/licenses/bsd-license.php
  */
-namespace bariew\docTest\examples;
+
 use \bariew\docTest\ClickTest;
 
 /**
@@ -14,57 +14,37 @@ use \bariew\docTest\ClickTest;
  *
  * @author Pavel Bariev <bariew@yandex.ru>
  */
-class ExampleClickTest extends \yii\codeception\TestCase
+class AllLinkClickTest extends \yii\codeception\TestCase
 {
-    /**
-     * @inheritdoc
-     */
-    public $appConfig = '@backend/tests/unit/_config.php';
-
     /**
      * Clicks all app links.
      */
     public function testLinks()
     {
-        $clickTest = $this->getClickTest();
-        $clickTest->clickAllLinks('/');
-        $clickTest->result();
-    }
-
-    /**
-     * Creates click test instance.
-     * @return ClickTest click test instance.
-     */
-    public function getClickTest()
-    {
-        // init clicktest with required base url param.
         $params = Yii::$app->params;
         $clickTest = new ClickTest($params['domainName'], [
-            'groupUrls' => true,
+            'formOptions' => [], // adding form sending
+            'groupUrls' => true, // exclude urls with only different GET params
             'createExcepts' => [
-                [['(.*\/)', false],['(\d+)', true]]
+                [['(.*\/)', false],['(\d+)', true]] // see ClickTest docs
             ],
             'curlOptions' => [
-                'cookieFile' => Yii::$app->params['curlCookieFile'],
-                'options'   => [
-                    CURLOPT_HTTPAUTH=> CURLAUTH_BASIC,
-                    CURLOPT_USERPWD => $params['httpAuth']['username'].':'.$params['httpAuth']['password']
-                ]
+                'cookieFile' => $params['curlCookieFile'], //path to cookie file
             ]
         ]);
-        $clickTest->selector = 'a:not([href=""])';
-        $clickTest->except[] = '/storage/';
+        $clickTest->selector = 'a:not([href=""])'; // phpQuery selector for searching urls on pages.
+        $clickTest->except[] = '/storage/'; // exclude url.
 
         // login to your login page with your access data.
         $clickTest->request(
-            '/index/logout'
-        )->login('/index/login', [
-                    'LoginForm[username]'=>'Alena',
-                    'LoginForm[password]'=>'password',
-                    'LoginForm[language]'=>'en',
-                    // click all site links recursively starting from root '/' url.
-                ]);
-        return $clickTest;
+            '/index/logout' // first doing logout.
+        )->login('/index/login', [ // and login.
+            'LoginForm[username]' => $params['auth']['username'],
+            'LoginForm[password]' => $params['auth']['password'],
+            'LoginForm[language]'=>'en',
+            // click all site links recursively starting from root '/' url.
+        ]);
+        $clickTest->clickAllLinks('/'); // this is the main action - clicking all found urls.
+        $clickTest->result(); // returning result.
     }
-
 }

@@ -1,17 +1,19 @@
 
 Doc test Yii2 extension
 ===================
-Executes @example docBlock params as test cases.
+If you don't have a time to write tests.
 
 
 Description
 -----------
 
-This extension is for fast testing.
-It takes your docblock @example tag and runs its content as assert expression.
-So you can define few @examples for your method to be sure that it 
-still return the data you expect.
-It also runs you url get and post requests, e.g. you can test your API Controller
+This extension is for testing without test writing. It doe few things.
+1. It uses Curl to visit all your app pages (it finds them too) and submits all found forms
+just to make sure they are generally ok. It is useful to avoid critical errors like 404 or 500 error pages.
+
+2. It takes your docblock @example tag and runs its content as assert expression. See examples below.
+
+3. It also runs you url get and post requests, e.g. you can test your controller, eg API.
 with @example tags for each method.
 
 
@@ -35,41 +37,41 @@ or add
 to the require section of your `composer.json` file.
 
 
-Usage:
+Unit tests:
 ------
------
-```
-    Unit tests:
-    1. define @example docblock in your tested class method descriptions:
-        /**
-         * Returns user default name
-         * @return string name.
-         * @example $this->getDefaultName() == "Mr. Smith"
-         */
-        protected function getDefaultName()
-        {
-            return "Mr. Smith"
-        }
-
-    2. Call UnitTest from your test script: 
-        $docTester = new \bariew\docTest\UnitTest("app\models\User");
-        $docTester->test();
-
-    You may also define your own docblock tag name, e.g.
-    1. * @test ... assert impression
-    2. $docTester = new UnitTest("My\Class\Name", ['tagName' => @test]);
-       $docTester->test();
-```
-```
-    Url tests:  
-    1. define @example docblocks in your target class method descriptions:
-        $this->post("http://mySite.com/myPath", ["myParam"=>"MyValue"]) == '{"code":200, "message":"OK"}'
-    2. Call DocTest from your test script:
-        $docTester = new \bariew\docTest\UrlTest("app\controllers\UserController");
-        $docTester->test();
-```
+1. define @example docblock in your tested class method descriptions:
 
 ```
-    Click tests:
-    1.
+    /**
+     * Returns user default name
+     * @return string name.
+     * @example $this->getDefaultName() == "Mr. Smith"
+     */
+    protected function getDefaultName()
+    {
+        return "Mr. Smith"
+    }
 ```
+
+2. Call UnitTest from your test script:
+```
+    $docTester = new \bariew\docTest\UnitTest("app\models\User");
+    $docTester->test();
+```
+
+Url tests:
+----------
+
+1. define @example docblocks in your target class method descriptions:
+```
+    $this->post("http://mySite.com/myPath", ["myParam"=>"MyValue"]) == '{"code":200, "message":"OK"}'
+```
+
+2. Call DocTest from your test script:
+```
+    $docTester = new \bariew\docTest\UrlTest("app\controllers\UserController");
+    $docTester->test();
+```
+
+
+3. Click tests. See in examples folder.
