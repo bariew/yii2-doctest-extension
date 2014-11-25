@@ -15,39 +15,43 @@ class Mock
      * @var \ReflectionClass
      */
     private $reflection;
-
     private $body;
+    private $model;
 
     public function create($className, $mockData = [], $initData = [])
     {
         $className        = str_replace('\\\\', '\\', '\\' . $className); // leaving only one leading slash
         $this->reflection = new \ReflectionClass($className);
         $shortName        = $this->reflection->getShortName();
-        $newClass         = preg_replace('/^(.*)\\\\(\w+)$/', '$1\\' . "{$shortName}MockGhost", $className);
-        if (!class_exists($newClass)) {
+        $newClass         = $this->reflection->getNamespaceName() . "\\{$shortName}MockGhost";
+        //if (!class_exists($newClass)) {
             $this->createMockClass($mockData);
-        }
-        $model = new $newClass($initData);
+        //}
+        $this->model = new $newClass($initData);
+        $this->addData($mockData);
+        return $this->model;
+    }
+
+    private function addData($mockData)
+    {
         foreach ($mockData as $attribute => $value) {
             if (
                 is_callable($value)
-                || !isset($model->$attribute)
+                || !isset($this->model->$attribute)
                 || !$this->reflection->hasProperty($attribute)
                 || !(new \ReflectionProperty($this->reflection, $attribute))->isPublic()
             ) {
                 continue;
             }
-            $model->$attribute = $value;
+            $this->model->$attribute = $value;
         }
-
-        return $model;
     }
 
     private function createMockClass($mockData = [])
     {
         $shortName  = $this->reflection->getShortName();
-        $classStart = self::reflectionContent($this->reflection, 1, $this->reflection->getStartLine());
-        $classStart = preg_replace("/class $shortName/", "class {$shortName}MockGhost", $classStart);
+        $classStart = self::reflectionContent($this->reflection, 1, $this->reflection->getStartLine()-1);
+        $classStart .= PHP_EOL . "class {$shortName}MockGhost extends $shortName" . PHP_EOL;
         $this->body = self::reflectionBody($this->reflection, false);
         foreach ($mockData as $attribute => $value) {
             if (is_callable($value)) {
@@ -60,7 +64,7 @@ class Mock
     }
 
     /**
-     * @param \ReflectionClass | \ReflectionMethod $reflection
+     * @param \ReflectionClass | \ReflectionMethod | \ReflectionFunction $reflection
      * @param bool $withName
      * @return string
      */
@@ -74,10 +78,10 @@ class Mock
     }
 
     /**
-     * @param \ReflectionClass | \ReflectionMethod $reflection
+     * @param \ReflectionMethod $reflection
      * @return string
      */
-    public static function reflectionName($reflection)
+    public static function methodName(\ReflectionMethod $reflection)
     {
         return self::reflectionContent(
             $reflection,
@@ -103,16 +107,50 @@ class Mock
     /**
      * @param $methodName
      * @param callable $replacement
+     * @throws \Exception
      * @return array|mixed|string
      */
     private function insertMethod($methodName, callable $replacement)
     {
-        $functionBody = self::reflectionBody(new \ReflectionFunction($replacement));
-        $functionBody = preg_replace('/.*function\s*(\(.*\})[, \]]*$/', '$1', $functionBody);
-
+        $functionReflection = new \ReflectionFunction($replacement);
+        $function = self::reflectionBody($functionReflection);
+        $function = str_replace(PHP_EOL, "", $function);
+        if (!preg_match('/.*function\s*(\(.*\))\s*(\{.*\})[, \]]*$/', $function, $matches)) {
+            throw new \Exception("Can not parse function: $function");
+        }
+        list($all, $args, $body) = $matches;
         return ($this->reflection->hasMethod($methodName))
-            ? $this->replaceMethod($methodName, $functionBody)
-            : $this->addMethod($methodName, $functionBody);
+            ? $this->replaceMethod($methodName, $body)
+            : $this->addMethod("function " . $methodName,  $args.$body);
+    }
+
+    /**
+     * @param $methodName
+     * @param $functionBody
+     * @return mixed
+     */
+    private function replaceMethod($methodName, $functionBody)
+    {
+        $methodReflection = $this->reflection->getMethod($methodName);
+        $newName = self::methodName($methodReflection);
+        if ($methodReflection->getDeclaringClass()->name != $this->reflection->name) {
+            return $this->addMethod($newName, $functionBody);
+        }
+        return $this->body = str_replace(
+            self::reflectionBody($methodReflection),
+            $newName . PHP_EOL . $functionBody,
+            $this->body
+        );
+    }
+
+    /**
+     * @param $methodName
+     * @param $functionBody
+     * @return array|string
+     */
+    private function addMethod($methodName, $functionBody)
+    {
+        return $this->addContent("{$methodName}{$functionBody}");
     }
 
     /**
@@ -133,33 +171,6 @@ class Mock
         return $this->body;
     }
 
-
-    /**
-     * @param $methodName
-     * @param $functionBody
-     * @return mixed
-     */
-    private function replaceMethod($methodName, $functionBody)
-    {
-        $methodReflection = $this->reflection->getMethod($methodName);
-        $newName          = preg_replace('/^(.*)(\(.*\))(.*)/', '$1$3', self::reflectionName($methodReflection));
-        return $this->body = str_replace(
-            self::reflectionBody($methodReflection),
-            $newName . $functionBody,
-            $this->body
-        );
-    }
-
-    /**
-     * @param $methodName
-     * @param $functionBody
-     * @return array|string
-     */
-    private function addMethod($methodName, $functionBody)
-    {
-        return $this->addContent("public function {$methodName}{$functionBody}");
-    }
-
     private function addAttribute($attributeName, $replacement)
     {
         return $this->addContent("public \${$attributeName} = {$replacement};");
@@ -167,12 +178,12 @@ class Mock
 
     private function addContent($content)
     {
-        $body = explode("\n", $this->body);
+        $body = explode(PHP_EOL, $this->body);
         while (strpos($body[count($body) - 1], '}') === false) {
             array_pop($body);
         }
         array_push($body, $body[count($body) - 1]);
         $body[count($body) - 2] =$content;
-        return $this->body = implode("\n", $body);
+        return $this->body = implode(PHP_EOL, $body);
     }
 } 
