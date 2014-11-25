@@ -83,6 +83,8 @@ class ClickTest
 
     protected $urlCounter = 1;
 
+    public $formOptions;
+
     /**
      * @inheritdoc
      */
@@ -127,9 +129,18 @@ class ClickTest
         if ($result['http_code'] >= 400) {
             return $this->errors[$request->getUrl()] = $this->responseHeader($request, 'http_code');
         }
-        if (!$urls = $this->getPageUrls($request->getResponseText(), $result['url'])) {
-            return;
+        if (is_array($this->formOptions)) {
+            $this->formOptions['url'] = $request->getUrl();
+            $this->formOptions['content'] = $request->getResponseText();
+            $postData = $this->getFormTest($this->formOptions)->postData();
+            $this->getCurl()->multiRequest($postData, function($request) {
+                $this->visitContentUrls($request);
+            });
         }
+        if (!$urls = $this->getPageUrls($request->getResponseText(), $result['url'])) {
+            return false;
+        }
+
         $this->getCurl()->multiRequest($urls, function($request) {
             return $this->visitContentUrls($request);
         });
@@ -269,7 +280,7 @@ class ClickTest
      * @param string $url url.
      * @return string Full url.
      */
-    protected function prepareUrl($url)
+    private function prepareUrl($url)
     {
         return $this->baseUrl . str_replace($this->baseUrl, "", $url);
     }
@@ -298,5 +309,21 @@ class ClickTest
             $result .= $data[1] ? $data[0] : preg_quote($matches[$key+1], '/');
         }
         return $this->except[] = '/'.$result .'/';
+    }
+
+    private $_formTest;
+
+    /**
+     * @param $options
+     * @return FormTest
+     */
+    private function getFormTest($options)
+    {
+        $model = $this->_formTest ? $this->_formTest : new FormTest();
+        $options = array_merge([
+            'baseUrl' => $this->baseUrl,
+        ], $options);
+        $model->setOptions($options);
+        return $model;
     }
 }
