@@ -132,10 +132,11 @@ class ClickTest
         if (is_array($this->formOptions)) {
             $this->formOptions['url'] = $request->getUrl();
             $this->formOptions['content'] = $request->getResponseText();
-            $postData = $this->getFormTest($this->formOptions)->postData();
-            $this->getCurl()->multiRequest($postData, function($request) {
-                $this->visitContentUrls($request);
-            });
+            if ($postData = $this->getFormTest($this->formOptions)->postData()) {
+                $this->getCurl()->multiRequest($postData, function($request) {
+                    $this->visitContentUrls($request);
+                });
+            }
         }
         if (!$urls = $this->getPageUrls($request->getResponseText(), $result['url'])) {
             return false;
@@ -319,11 +320,11 @@ class ClickTest
      */
     private function getFormTest($options)
     {
-        $model = $this->_formTest ? $this->_formTest : new FormTest();
+        $this->_formTest = $this->_formTest ? $this->_formTest : new FormTest();
         $options = array_merge([
             'baseUrl' => $this->baseUrl,
         ], $options);
-        $model->setOptions($options);
-        return $model;
+        $this->_formTest->setOptions($options);
+        return $this->_formTest;
     }
 }
