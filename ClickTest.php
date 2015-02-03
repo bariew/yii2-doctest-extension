@@ -20,7 +20,6 @@ class ClickTest
 {
     /* TESTING */
 
-    public $response;
     /**
      * @var Curl curl instance.
      */
@@ -43,10 +42,11 @@ class ClickTest
         '/\/logout$/',
         '/\/delete/',
         '/^mailto/',
+        '/javascript\:/'
     ];
 
     /**
-     * @var array urles that have already benn pass.
+     * @var array urls that have already been passed.
      */
     public $passedUrls = [];
 
@@ -59,11 +59,6 @@ class ClickTest
      * @var array links click all result errors.
      */
     public $errors = [];
-
-    /**
-     * @var integer start timestamp
-     */
-    protected $startTime;
 
     /**
      * @var bool whether to skip urls with the same path (but different GET params)
@@ -81,9 +76,26 @@ class ClickTest
      */
     public $curlOptions = [];
 
-    protected $urlCounter = 1;
-
+    public $response;
+    /**
+     * @var array form test settings
+     */
     public $formOptions;
+
+    /**
+     * @var FormTest instance
+     */
+    private $_formTest;
+
+    /**
+     * @var Callback function to additionally check received page content
+     * @example $test = new ClickTest('http://my.site', ['pageCallback' => function($url, $content, $errors) {
+            if (preg_match('/Error/', $content)) {
+     *          $errors[$url] = "Contains Error text".
+     *      }
+     * }];
+     */
+    public $pageCallback;
 
     /**
      * @inheritdoc
@@ -106,9 +118,6 @@ class ClickTest
      */
     public function clickAllLinks($startUrl = '/')
     {
-        if (!$this->startTime) {
-            $this->startTime = time();
-        }
         $startUrl = $this->prepareUrl($startUrl);
         $this->visited[] = $startUrl;
         $this->getCurl()->multiRequest([$startUrl], function($request) {
@@ -121,13 +130,15 @@ class ClickTest
      * Callback for curl multirequests.
      * Gets urls from response body and calls multicurl again.
      * @param Request $request curl request.
-     * @return mixed nevermind.
+     * @return mixed.
      */
     public function visitContentUrls(Request $request)
     {
         $result =  $request->getResponseInfo();
         if ($result['http_code'] >= 400) {
             return $this->errors[$request->getUrl()] = $this->responseHeader($request, 'http_code');
+        } elseif ($this->pageCallback) {
+            call_user_func_array($this->pageCallback, [$request->getUrl(), $request->getResponseText(), &$this->errors]);
         }
         if (is_array($this->formOptions)) {
             $this->formOptions['url'] = $request->getUrl();
@@ -311,8 +322,6 @@ class ClickTest
         }
         return $this->except[] = '/'.$result .'/';
     }
-
-    private $_formTest;
 
     /**
      * @param $options
