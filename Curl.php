@@ -191,6 +191,8 @@ class Curl
         }
     }
 
+    public $unique = false;
+    public $visited = [];
     /**
      * Sends rolling curl multirequest.
      * @param array $data curl request data as [url, url, ...] or [url=>['post'=>[...], 'files'=>[...]]]
@@ -203,6 +205,11 @@ class Curl
         foreach ($data as $url => $options) {
             if (is_string($options)) {
                 $url = $options;
+            }
+            if ($this->unique && in_array($url, $this->visited) && !@$options['post']) {
+                continue;
+            } else {
+                $this->visited[] = $url;
             }
             $request = new Request($url);
             $curlOptions = $this->getCurlOptions($url, @$options['post'], @$options['files']);

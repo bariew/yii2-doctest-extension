@@ -97,6 +97,8 @@ class ClickTest
      */
     public $pageCallback;
 
+    public $allResults = [];
+
     /**
      * @inheritdoc
      */
@@ -135,6 +137,7 @@ class ClickTest
     public function visitContentUrls(Request $request)
     {
         $result =  $request->getResponseInfo();
+        $this->allResults[] = $result;
         if ($result['http_code'] >= 400) {
             return $this->errors[$request->getUrl()] = $this->responseHeader($request, 'http_code');
         } elseif ($this->pageCallback) {
@@ -182,11 +185,12 @@ class ClickTest
         $result = [];
         $doc = \phpQuery::newDocument($body);
         foreach ($doc->find($this->selector) as $el) {
-            $url = $this->passedUrls[] = pq($el)->attr('href');
+            $el =  pq($el);
+            $url = $this->passedUrls[] = $el->attr('href');
 //            if (strpos($url, 'document/show')) {
 //                echo '--------'. $parentUrl;exit;
 //            }
-            if (pq($el)->attr('disabled') || pq($el)->attr('data-method') || $this->filterUrl($url)) {
+            if ($el->attr('disabled') || $el->attr('data-method') || $this->filterUrl($url)) {
                 continue;
             }
             $result[] = $this->visited[] = $this->prepareUrl($url);
