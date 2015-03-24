@@ -20,7 +20,7 @@ class FormTest
     private $except = [];
     public $visited = [];
 
-    public function postData()
+    public function postData($parentUrl)
     {
         $result = [];
         $doc = \phpQuery::newDocument($this->content);
@@ -32,6 +32,9 @@ class FormTest
             if ($this->filterPost($url, $post)) {
                 continue;
             }
+//            if ($url == '/pamm/account/view') {
+//                echo $parentUrl;exit;
+//            }
             $result[$this->prepareUrl($url)] = $post;
         }
         return $result;
@@ -65,7 +68,7 @@ class FormTest
 
     private function addInput(\phpQueryObject $input, &$data, $value = null)
     {
-        $data[$input->attr('name')] = 'asd';
+        $data[$input->attr('name')] = $input->attr('value') ? : 'asd';
     }
     private function addSelect(\phpQueryObject $input, &$data, $value = null)
     {
