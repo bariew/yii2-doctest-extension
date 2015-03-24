@@ -146,7 +146,7 @@ class ClickTest
         if (is_array($this->formOptions)) {
             $this->formOptions['url'] = $request->getUrl();
             $this->formOptions['content'] = $request->getResponseText();
-            if ($postData = $this->getFormTest($this->formOptions)->postData()) {
+            if ($postData = $this->getFormTest($this->formOptions)->postData($result['url'])) {
                 $this->getCurl()->multiRequest($postData, function($request) {
                     $this->visitContentUrls($request);
                 });
@@ -187,7 +187,7 @@ class ClickTest
         foreach ($doc->find($this->selector) as $el) {
             $el =  pq($el);
             $url = $this->passedUrls[] = $el->attr('href');
-//            if (strpos($url, 'document/show')) {
+//            if (strpos($url, 'pamm/account/view')) {
 //                echo '--------'. $parentUrl;exit;
 //            }
             if ($el->attr('disabled') || $el->attr('data-method') || $this->filterUrl($url)) {
