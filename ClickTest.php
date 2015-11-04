@@ -122,7 +122,8 @@ class ClickTest
     {
         $startUrl = $this->prepareUrl($startUrl);
         $this->visited[] = $startUrl;
-        $this->getCurl()->multiRequest([$startUrl], function($request) {
+
+        $this->getCurl()->multiRequest(array($startUrl), function($request) {
             return $this->visitContentUrls($request);
         });
         return $this;
@@ -138,6 +139,9 @@ class ClickTest
     {
         $result =  $request->getResponseInfo();
         $this->allResults[] = $result;
+        if (strpos($result['url'], $this->baseUrl) === false) {
+            return false;
+        }
         if ($result['http_code'] >= 400) {
             return $this->errors[$request->getUrl()] = $this->responseHeader($request, 'http_code');
         } elseif ($this->pageCallback) {
@@ -182,12 +186,12 @@ class ClickTest
      */
     protected function getPageUrls($body, $parentUrl)
     {
-        $result = [];
+        $result = array();
         $doc = \phpQuery::newDocument($body);
         foreach ($doc->find($this->selector) as $el) {
             $el =  pq($el);
             $url = $this->passedUrls[] = $el->attr('href');
-//            if (strpos($url, 'pamm/account/view')) {
+//            if (strpos($url, 'en/app')) {
 //                echo '--------'. $parentUrl;exit;
 //            }
             if ($el->attr('disabled') || $el->attr('data-method') || $this->filterUrl($url)) {
@@ -198,6 +202,7 @@ class ClickTest
         return $result;
     }
 
+    public $filterUrlCallback;
     /**
      * Checks whether url has to be rejected by filters.
      * @param string $url url
@@ -209,6 +214,9 @@ class ClickTest
         $fullUrl = $this->prepareUrl($url);
         if (in_array($fullUrl, $this->visited)) {
             return true;
+        }
+        if ($this->filterUrlCallback) {
+            return call_user_func_array($this->filterUrlCallback, array($url));
         }
         $regexp = '/'. preg_quote(@$parsedUrl['path'] , '/') . '/';
         if ($this->groupUrls && preg_grep($regexp, $this->visited)) {
@@ -324,7 +332,7 @@ class ClickTest
         foreach($patternAr as $key => $data){
             $result .= $data[1] ? $data[0] : preg_quote($matches[$key+1], '/');
         }
-        return $this->except[] = '/'.$result .'/';
+        return $this->except[$result] = '/^'.$result .'$/';
     }
 
     /**
@@ -334,9 +342,9 @@ class ClickTest
     private function getFormTest($options = [])
     {
         $this->_formTest = $this->_formTest ? $this->_formTest : new FormTest();
-        $options = array_merge([
+        $options = array_merge(array(
             'baseUrl' => $this->baseUrl,
-        ], $options);
+        ), $options);
         $this->_formTest->setOptions($options);
         return $this->_formTest;
     }
