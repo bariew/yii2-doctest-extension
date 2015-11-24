@@ -215,9 +215,6 @@ class ClickTest
         if (in_array($fullUrl, $this->visited)) {
             return true;
         }
-        if ($this->filterUrlCallback) {
-            return call_user_func_array($this->filterUrlCallback, array($url));
-        }
         $regexp = '/'. preg_quote(@$parsedUrl['path'] , '/') . '/';
         if ($this->groupUrls && preg_grep($regexp, $this->visited)) {
             return true;
@@ -232,6 +229,9 @@ class ClickTest
         }
         foreach ($this->createExcepts as $patternAr) {
             $this->createExcept($url, $patternAr);
+        }
+        if ($this->filterUrlCallback) {
+            return call_user_func_array($this->filterUrlCallback, array($url));
         }
         return false;
     }
