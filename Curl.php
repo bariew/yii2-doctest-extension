@@ -211,9 +211,11 @@ class Curl
             } else {
                 $this->visited[] = $url;
             }
-            $request = new Request($url);
+            $method = isset($options['post']) ? 'POST' : 'GET';
+            $request = new Request($url, $method);
             $curlOptions = $this->getCurlOptions($url, @$options['post'], @$options['files']);
             $request->setOptions($curlOptions);
+
             $rollingCurl->add($request);
         }
 

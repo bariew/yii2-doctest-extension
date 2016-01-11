@@ -151,7 +151,7 @@ class ClickTest
             $this->formOptions['url'] = $request->getUrl();
             $this->formOptions['content'] = $request->getResponseText();
             if ($postData = $this->getFormTest($this->formOptions)->postData($result['url'])) {
-                $this->getCurl()->multiRequest($postData, function($request) {
+                $this->getCurl()->multiRequest($postData, function(Request $request) {
                     $this->visitContentUrls($request);
                 });
             }
@@ -341,7 +341,9 @@ class ClickTest
      */
     private function getFormTest($options = [])
     {
-        $this->_formTest = $this->_formTest ? $this->_formTest : new FormTest();
+        $this->_formTest = $this->_formTest
+            ? $this->_formTest
+            : new FormTest();
         $options = array_merge(array(
             'baseUrl' => $this->baseUrl,
         ), $options);

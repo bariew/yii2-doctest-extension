@@ -35,8 +35,13 @@ class FormTest
 //            if ($url == '/pamm/account/view') {
 //                echo $parentUrl;exit;
 //            }
-            $result[$this->prepareUrl($url)] = $post;
+            if (strtolower(@pq($el)->attr('method')) == 'post'){
+                $result[$this->prepareUrl($url)] = compact('post');
+            } else {
+                $result[] = $this->prepareUrl($url, $post);
+            }
         }
+
         return $result;
     }
 
@@ -106,11 +111,17 @@ class FormTest
     /**
      * Adds base path to url.
      * @param string $url url.
+     * @param array $data
      * @return string Full url.
      */
-    private function prepareUrl($url)
+    private function prepareUrl($url, $data = [])
     {
-        return $this->baseUrl . str_replace($this->baseUrl, "", $url);
+        $url = $this->baseUrl . str_replace($this->baseUrl, "", $url);
+        if (!$data) {
+            return $url;
+        }
+        $url = parse_url($url);
+        return $url['path'] . '?' . http_build_query(array_merge((array) @$url['query'], $data));
     }
 
     public function setOptions($options)
