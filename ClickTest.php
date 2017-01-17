@@ -50,6 +50,9 @@ class ClickTest
      */
     public $passedUrls = [];
 
+    /** @var array stores parents of visited url (for good error info) */
+    public $parents = [];
+
     /**
      * @var array urls that have already been visited.
      */
@@ -143,7 +146,9 @@ class ClickTest
             return false;
         }
         if ($result['http_code'] >= 400) {
-            return $this->errors[$request->getUrl()] = $this->responseHeader($request, 'http_code');
+            $parents = @$this->parents[$request->getUrl()];
+            return $this->errors[$request->getUrl()] = $this->responseHeader($request, 'http_code')
+                . ' ' . ($parents ? implode(', ', $parents) : '');
         } elseif ($this->pageCallback) {
             call_user_func_array($this->pageCallback, [$request->getUrl(), $request->getResponseText(), &$this->errors]);
         }
@@ -151,13 +156,16 @@ class ClickTest
             $this->formOptions['url'] = $request->getUrl();
             $this->formOptions['content'] = $request->getResponseText();
             if ($postData = $this->getFormTest($this->formOptions)->postData($result['url'])) {
-                $this->getCurl()->multiRequest($postData, function($request) {
+                $this->getCurl()->multiRequest($postData, function(Request $request) {
                     $this->visitContentUrls($request);
                 });
             }
         }
         if (!$urls = $this->getPageUrls($request->getResponseText(), $result['url'])) {
             return false;
+        }
+        foreach ($urls as $url) {
+            $this->parents[$url][] = $request->getUrl();
         }
 
         $this->getCurl()->multiRequest($urls, function($request) {
@@ -181,19 +189,15 @@ class ClickTest
     /**
      * Finds all page urls.
      * @param string $body page body.
-     * @param $parentUrl
      * @return array urls
      */
-    protected function getPageUrls($body, $parentUrl)
+    protected function getPageUrls($body)
     {
         $result = array();
         $doc = \phpQuery::newDocument($body);
         foreach ($doc->find($this->selector) as $el) {
             $el =  pq($el);
             $url = $this->passedUrls[] = $el->attr('href');
-//            if (strpos($url, 'en/app')) {
-//                echo '--------'. $parentUrl;exit;
-//            }
             if ($el->attr('disabled') || $el->attr('data-method') || $this->filterUrl($url)) {
                 continue;
             }
@@ -215,9 +219,6 @@ class ClickTest
         if (in_array($fullUrl, $this->visited)) {
             return true;
         }
-        if ($this->filterUrlCallback) {
-            return call_user_func_array($this->filterUrlCallback, array($url));
-        }
         $regexp = '/'. preg_quote(@$parsedUrl['path'] , '/') . '/';
         if ($this->groupUrls && preg_grep($regexp, $this->visited)) {
             return true;
@@ -232,6 +233,9 @@ class ClickTest
         }
         foreach ($this->createExcepts as $patternAr) {
             $this->createExcept($url, $patternAr);
+        }
+        if ($this->filterUrlCallback) {
+            return call_user_func_array($this->filterUrlCallback, array($url));
         }
         return false;
     }
@@ -341,7 +345,9 @@ class ClickTest
      */
     private function getFormTest($options = [])
     {
-        $this->_formTest = $this->_formTest ? $this->_formTest : new FormTest();
+        $this->_formTest = $this->_formTest
+            ? $this->_formTest
+            : new FormTest();
         $options = array_merge(array(
             'baseUrl' => $this->baseUrl,
         ), $options);
