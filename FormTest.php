@@ -17,6 +17,8 @@ class FormTest
     private $baseUrl;
     private $selector = 'form';
 
+    public $values = [];
+
     private $except = [];
     public $visited = [];
 
@@ -32,7 +34,7 @@ class FormTest
             if ($this->filterPost($url, $post)) {
                 continue;
             }
-//            if ($url == '/pamm/account/view') {
+//            if ($url == '/account/view') {
 //                echo $parentUrl;exit;
 //            }
             if (strtolower(@pq($el)->attr('method')) == 'post'){
@@ -52,10 +54,15 @@ class FormTest
             $el = pq($input);
             if (
                 ($value = $el->attr('example')) || $value = $el->attr('value')) {
-                $result[$el->attr(('name'))] = $value;
+                $result[$el->attr('name')] = $value;
                 continue;
             }
-            $value = $el->attr('example');
+            foreach ($this->values as $regex => $v) {
+                if (preg_match($regex, $el->attr('name'))) {
+                    $result[$el->attr('name')] = $v;
+                    continue 2;
+                }
+            }
             switch($input->tagName) {
                 case 'input' : $this->addInput($el, $result, $value);
                     break;
@@ -77,7 +84,15 @@ class FormTest
     }
     private function addSelect(\phpQueryObject $input, &$data, $value = null)
     {
-        $data[$input->attr('name')] = 1;
+        $value = $value ?? 1; // default
+        foreach ($input->find('option') as $item) {
+            $item = pq($item);
+            $value = $item->attr('value');
+            if ($item->attr('selected')) {
+                break;
+            }
+        }
+        $data[$input->attr('name')] = $value;
     }
     private function addCheckbox(\phpQueryObject $input, &$data, $value = null)
     {

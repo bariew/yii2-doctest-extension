@@ -79,7 +79,11 @@ class ClickTest
      */
     public $curlOptions = [];
 
+    /**
+     * @var string response body
+     */
     public $response;
+    
     /**
      * @var array form test settings
      */
@@ -99,8 +103,6 @@ class ClickTest
      * }];
      */
     public $pageCallback;
-
-    public $allResults = [];
 
     /**
      * @inheritdoc
@@ -133,6 +135,21 @@ class ClickTest
     }
 
     /**
+     * @param $url
+     */
+    public function visitUrl($url)
+    {
+        $url = $this->prepareUrl($url);
+        $this->formOptions['url'] = $url;
+        $this->formOptions['content'] = file_get_contents('/var/www/crmconnect/runtime/test.html');
+        if ($postData = $this->getFormTest($this->formOptions)->postData($url)) {
+//            $this->getCurl()->multiRequest($postData, function(Request $request) {
+//
+//            });
+        }
+    }
+
+    /**
      * Callback for curl multirequests.
      * Gets urls from response body and calls multicurl again.
      * @param Request $request curl request.
@@ -141,7 +158,6 @@ class ClickTest
     public function visitContentUrls(Request $request)
     {
         $result =  $request->getResponseInfo();
-        $this->allResults[] = $result;
         if (strpos($result['url'], $this->baseUrl) === false) {
             return false;
         }
@@ -161,6 +177,7 @@ class ClickTest
                 });
             }
         }
+        
         if (!$urls = $this->getPageUrls($request->getResponseText(), $result['url'])) {
             return false;
         }
