@@ -120,15 +120,18 @@ class ClickTest
 
     /**
      * Clicks all link on page recursively.
-     * @param string $startUrl base path for page to click all links on.
+     * @param string $urls base paths for page to click all links on.
      * @return \self $this this
      */
-    public function clickAllLinks($startUrl = '/')
+    public function clickAllLinks($urls = '/')
     {
-        $startUrl = $this->prepareUrl($startUrl);
-        $this->visited[] = $startUrl;
+        $urls = array_filter((array) $urls);
+        foreach ($urls as &$url) {
+            $url = $this->prepareUrl($url);
+            $this->visited[] = $url;
+        }
 
-        $this->getCurl()->multiRequest(array($startUrl), function($request) {
+        $this->getCurl()->multiRequest($urls, function($request) {
             return $this->visitContentUrls($request);
         });
         return $this;
