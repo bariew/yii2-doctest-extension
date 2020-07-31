@@ -38,9 +38,9 @@ class FormTest
 //                echo $parentUrl;exit;
 //            }
             if (strtolower(@pq($el)->attr('method')) == 'post'){
-                $result[$this->prepareUrl($url)] = compact('post');
+                $result[$this->prepareUrl($url)] = ['post' => $post];
             } else {
-                $result[] = $this->prepareUrl($url, $post);
+                $result[$this->prepareUrl($url, $post)] = [];
             }
         }
 
@@ -54,7 +54,7 @@ class FormTest
             $el = pq($input);
             if (
                 ($value = $el->attr('example')) || $value = $el->attr('value')) {
-                $result[$el->attr('name')] = $value;
+                $result[$el->attr('name')] = substr($value, 0, 100);
                 continue;
             }
             foreach ($this->values as $regex => $v) {
@@ -80,7 +80,7 @@ class FormTest
 
     private function addInput(\phpQueryObject $input, &$data, $value = null)
     {
-        $data[$input->attr('name')] = $input->attr('value') ? : 'asd';
+        $data[$input->attr('name')] = substr($input->attr('value'), 0, 100) ? : 'test';
     }
     private function addSelect(\phpQueryObject $input, &$data, $value = null)
     {

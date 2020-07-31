@@ -168,24 +168,20 @@ class ClickTest
         } elseif ($this->pageCallback) {
             call_user_func_array($this->pageCallback, [$request->getUrl(), $request->getResponseText(), &$this->errors]);
         }
+        $data = [];
         if (is_array($this->formOptions)) {
             $this->formOptions['url'] = $request->getUrl();
             $this->formOptions['content'] = $request->getResponseText();
-            if ($postData = $this->getFormTest($this->formOptions)->postData($result['url'])) {
-                $this->getCurl()->multiRequest($postData, function(Request $request) {
-                    $this->visitContentUrls($request);
-                });
-            }
+            $data = $this->getFormTest($this->formOptions)->postData($result['url']);
         }
         
-        if (!$urls = $this->getPageUrls($request->getResponseText(), $result['url'])) {
-            return false;
-        }
-        foreach ($urls as $url) {
+        $data = array_merge($this->getPageUrls($request->getResponseText(), $result['url']), $data);
+        foreach ($data as $url => $options) {
             $this->parents[$url][] = $request->getUrl();
+            $this->visited[] = $url;
         }
 
-        $this->getCurl()->multiRequest($urls, function($request) {
+        $this->getCurl()->multiRequest($data, function(Request $request) {
             return $this->visitContentUrls($request);
         });
     }
@@ -218,7 +214,7 @@ class ClickTest
             if ($el->attr('disabled') || $el->attr('data-method') || $this->filterUrl($url)) {
                 continue;
             }
-            $result[] = $this->visited[] = $this->prepareUrl($url);
+            $result[$this->prepareUrl($url)] = [];
         }
         return $result;
     }
