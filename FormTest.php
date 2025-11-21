@@ -1,14 +1,20 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: pt
- * Date: 25.11.14
- * Time: 12:50
+ * FormTest class file
  */
 
 namespace bariew\docTest;
 
 
+use voku\helper\HtmlDomParser;
+use voku\helper\SimpleHtmlDomInterface;
+
+/**
+ * Class FormTest
+ *
+ * Automatically fill html form found in the crawled site
+ * @package bariew\docTest
+ */
 class FormTest
 {
     private $url;
@@ -22,22 +28,26 @@ class FormTest
     private $except = [];
     public $visited = [];
 
+    /**
+     * @param $parentUrl
+     * @return array
+     */
     public function postData($parentUrl)
     {
         $result = [];
-        $doc = \phpQuery::newDocument($this->content);
+        $doc = HtmlDomParser::str_get_html($this->content);
         foreach ($doc->find($this->selector) as $el) {
-            if (!$url = pq($el)->attr('action')) {
+            if (!$url = $el->getAttribute('action')) {
                 $url = $this->url;
             }
-            $post = $this->createPost(pq($el));
+            $post = $this->createPost($el);
             if ($this->filterPost($url, $post)) {
                 continue;
             }
 //            if ($url == '/account/view') {
 //                echo $parentUrl;exit;
 //            }
-            if (strtolower(@pq($el)->attr('method')) == 'post'){
+            if (strtolower(@$el->getAttribute('method')) == 'post'){
                 $result[$this->prepareUrl($url)] = ['post' => $post];
             } else {
                 $result[$this->prepareUrl($url, $post)] = [];
@@ -47,23 +57,26 @@ class FormTest
         return $result;
     }
 
-    private function createPost(\phpQueryObject $form)
+    /**
+     * @param SimpleHtmlDomInterface $form
+     * @return array
+     */
+    private function createPost($form)
     {
         $result = [];
-        foreach ($form->find('input, select, checkbox, textarea') as $input) {
-            $el = pq($input);
+        foreach ($form->find('input, select, checkbox, textarea') as $el) {
             if (
-                ($value = $el->attr('example')) || $value = $el->attr('value')) {
-                $result[$el->attr('name')] = substr($value, 0, 100);
+                ($value = $el->getAttribute('example')) || $value = $el->getAttribute('value')) {
+                $result[$el->getAttribute('name')] = substr($value, 0, 100);
                 continue;
             }
             foreach ($this->values as $regex => $v) {
-                if (preg_match($regex, $el->attr('name'))) {
-                    $result[$el->attr('name')] = $v;
+                if (preg_match($regex, $el->getAttribute('name'))) {
+                    $result[$el->getAttribute('name')] = $v;
                     continue 2;
                 }
             }
-            switch($input->tagName) {
+            switch($el->tag) {
                 case 'input' : $this->addInput($el, $result, $value);
                     break;
                 case 'select': $this->addSelect($el, $result, $value);
@@ -78,31 +91,58 @@ class FormTest
         return $result;
     }
 
-    private function addInput(\phpQueryObject $input, &$data, $value = null)
+    /**
+     * @param SimpleHtmlDomInterface $input
+     * @param $data
+     * @param null $value
+     */
+    private function addInput($input, &$data, $value = null)
     {
-        $data[$input->attr('name')] = substr($input->attr('value'), 0, 100) ? : 'test';
+        $data[$input->getAttribute('name')] = substr($input->getAttribute('value'), 0, 100) ? : 'test';
     }
-    private function addSelect(\phpQueryObject $input, &$data, $value = null)
+
+    /**
+     * @param SimpleHtmlDomInterface $input
+     * @param $data
+     * @param null $value
+     */
+    private function addSelect($input, &$data, $value = null)
     {
         $value = $value ?? 1; // default
         foreach ($input->find('option') as $item) {
-            $item = pq($item);
-            $value = $item->attr('value');
-            if ($item->attr('selected')) {
+            $value = $item->getAttribute('value');
+            if ($item->getAttribute('selected')) {
                 break;
             }
         }
-        $data[$input->attr('name')] = $value;
-    }
-    private function addCheckbox(\phpQueryObject $input, &$data, $value = null)
-    {
-        $data[$input->attr('name')] = 1;
-    }
-    private function addTextarea(\phpQueryObject $input, &$data, $value = null)
-    {
-        $data[$input->attr('name')] = "Any text";
+        $data[$input->getAttribute('name')] = $value;
     }
 
+    /**
+     * @param SimpleHtmlDomInterface $input
+     * @param $data
+     * @param null $value
+     */
+    private function addCheckbox($input, &$data, $value = null)
+    {
+        $data[$input->getAttribute('name')] = 1;
+    }
+
+    /**
+     * @param SimpleHtmlDomInterface $input
+     * @param $data
+     * @param null $value
+     */
+    private function addTextarea($input, &$data, $value = null)
+    {
+        $data[$input->getAttribute('name')] = "Any text";
+    }
+
+    /**
+     * @param $url
+     * @param $post
+     * @return bool
+     */
     private function filterPost($url, $post)
     {
         $parsedUrl = parse_url($url);
@@ -122,7 +162,6 @@ class FormTest
         return false;
     }
 
-
     /**
      * Adds base path to url.
      * @param string $url url.
@@ -139,6 +178,9 @@ class FormTest
         return $url['path'] . '?' . http_build_query(array_merge((array) @$url['query'], $data));
     }
 
+    /**
+     * @param $options
+     */
     public function setOptions($options)
     {
         foreach ($options as $attribute => $value) {

@@ -1,6 +1,6 @@
 {
     "name": "bariew/yii2-doctest-extension",
-    "description": "Executes @example docBlock params as test cases",
+    "description": "Runs crawler to test site pages accessibility",
     "type": "yii2-extension",
     "keywords": ["yii2","extension","test"],
     "license": "BSD-3-Clause",
@@ -11,7 +11,7 @@
         }
     ],
     "require": {
-        "bariew/phpquery": "~1.0.3",
+        "voku/simple_html_dom": "dev-master",
         "chuyskywalker/rolling-curl": "~3.1.0"
     },
     "autoload": {

@@ -1,16 +1,17 @@
 <?php
 /**
- * ClickTest class file.
- * @copyright (c) 2014, Galament
- * @license http://www.opensource.org/licenses/bsd-license.php
+ * ClickTest class file
  */
+ 
+
 namespace bariew\docTest;
 
 use RollingCurl\Request;
+use voku\helper\HtmlDomParser;
 
 /**
  * Clicks all site links.
- * 
+ *
  * See place example ExampleClickTest file from examples folder into your tests/unit folder
  * And run "vendor/bin/codecept run unit" command.
  *
@@ -18,8 +19,6 @@ use RollingCurl\Request;
  */
 class ClickTest
 {
-    /* TESTING */
-
     /**
      * @var Curl curl instance.
      */
@@ -31,7 +30,7 @@ class ClickTest
     public $baseUrl;
 
     /**
-     * @var string css selector for all site links
+     * @var string css selector for all site links to visit
      */
     public $selector = 'a:not([href=""]):not([disabled])';
 
@@ -67,7 +66,7 @@ class ClickTest
      * @var bool whether to skip urls with the same path (but different GET params)
      */
     public $groupUrls = true;
-    
+
     /**
      * @var array regexps to add to exception like [['(.*\/)', false],['(\d+)', true]]
      * @see ClickTest::createExcept()
@@ -83,7 +82,7 @@ class ClickTest
      * @var string response body
      */
     public $response;
-    
+
     /**
      * @var array form test settings
      */
@@ -97,12 +96,17 @@ class ClickTest
     /**
      * @var Callback function to additionally check received page content
      * @example $test = new ClickTest('http://my.site', ['pageCallback' => function($url, $content, $errors) {
-            if (preg_match('/Error/', $content)) {
+    if (preg_match('/Error/', $content)) {
      *          $errors[$url] = "Contains Error text".
      *      }
      * }];
      */
     public $pageCallback;
+
+    /**
+     * @var callable to remove urls from visiting
+     */
+    public $filterUrlCallback;
 
     /**
      * @inheritdoc
@@ -177,7 +181,7 @@ class ClickTest
             $this->formOptions['content'] = $request->getResponseText();
             $data = $this->getFormTest($this->formOptions)->postData($result['url']);
         }
-        
+
         $data = array_merge($this->getPageUrls($request->getResponseText(), $result['url']), $data);
         foreach ($data as $url => $options) {
             $this->parents[$url][] = $request->getUrl();
@@ -210,11 +214,10 @@ class ClickTest
     protected function getPageUrls($body)
     {
         $result = array();
-        $doc = \phpQuery::newDocument($body);
+        $doc = HtmlDomParser::str_get_html($body);
         foreach ($doc->find($this->selector) as $el) {
-            $el =  pq($el);
-            $url = $this->passedUrls[] = $el->attr('href');
-            if ($el->attr('disabled') || $el->attr('data-method') || $this->filterUrl($url)) {
+            $url = $this->passedUrls[] = $el->getAttribute('href');
+            if ($el->getAttribute('disabled') || $el->getAttribute('data-method') || $this->filterUrl($url)) {
                 continue;
             }
             $result[$this->prepareUrl($url)] = [];
@@ -222,7 +225,6 @@ class ClickTest
         return $result;
     }
 
-    public $filterUrlCallback;
     /**
      * Checks whether url has to be rejected by filters.
      * @param string $url url
@@ -287,13 +289,13 @@ class ClickTest
     public function login($url, $post)
     {
         $getResult = $this->request($url)->response;
-        $doc = \phpQuery::newDocument($getResult);
+        $doc = HtmlDomParser::str_get_html($getResult);
         $inputName = key($post);
-        if (!$doc->find("[name='{$inputName}']")->length) {
+        if (!$doc->findOne("[name='{$inputName}']")) {
             throw new \Exception("Could not get page with {$inputName} on {$url}");
         }
-        foreach ($doc->find("[name=_csrf]") as $el) {
-            $post['_csrf'] = pq($el)->attr('value');
+        if ($el = $doc->findOne("[name='_csrf']")) {
+            $post['_csrf'] = $el->getAttribute('value');
         }
         return $this->request($url, $post);
     }

@@ -32,7 +32,7 @@ class AllLinkClickTest extends \yii\codeception\TestCase
                 'cookieFile' => $params['curlCookieFile'], //path to cookie file
             ]
         ]);
-        $clickTest->selector = 'a:not([href=""])'; // phpQuery selector for searching urls on pages.
+        $clickTest->selector = 'a:not([href=""])'; //  selector for searching urls on pages.
         $clickTest->except[] = '/storage/'; // exclude url.
 
         // login to your login page with your access data.

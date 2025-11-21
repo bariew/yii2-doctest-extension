@@ -65,7 +65,6 @@ class Curl
             CURLOPT_SSL_VERIFYPEER  => false,
             CURLOPT_SSL_VERIFYHOST  => false,
             CURLOPT_HTTPAUTH        => CURLAUTH_ANY,//CURLAUTH_BASIC,
-            CURLOPT_VERBOSE         => true,
             CURLOPT_HEADER          => true,
             CURLOPT_COOKIEJAR       => $this->cookieFile,
             CURLOPT_COOKIEFILE      => $this->cookieFile,
@@ -213,7 +212,7 @@ class Curl
             }
             $method = isset($options['post']) ? 'POST' : 'GET';
             $request = new Request($url, $method);
-            $curlOptions = $this->getCurlOptions($url, @$options['post'], @$options['files']);
+            $curlOptions = $this->getCurlOptions($url, $options['post'] ?? [], $options['files'] ?? []);
             $request->setOptions($curlOptions);
 
             $rollingCurl->add($request);
